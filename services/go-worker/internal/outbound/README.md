@@ -1,0 +1,13 @@
+# Outbound client contract
+
+`NewClient(Options)` accepts only HTTP(S) requests. The caller supplies `AllowedOrigins` from administrator-owned configuration, never from a job's untrusted URL or headers. Origins include scheme, hostname and effective port; paths, credentials, query strings and wildcards are rejected. Existing explicit ports and default ports are normalized, while the request path and signed query remain unchanged.
+
+Every request and redirect validates every DNS answer before dialing a numeric IP. Public targets are the default. An exact origin grant additionally permits RFC1918, loopback and IPv6 ULA; metadata, link-local, unspecified, multicast, transition and reserved networks remain denied. The AWS IPv6 metadata address is denied even under a ULA grant. There is no second DNS lookup by the transport, and connections are not reused between requests.
+
+`ProxyURL` supports HTTP or HTTPS CONNECT with optional proxy credentials. The proxy endpoint is independently resolved and pinned, and may use an administrator-configured LAN address. Destination permissions still apply. CONNECT always names the numeric destination, including for HTTP targets; proxies must support CONNECT to the destination port. If one validated destination address fails, a fresh proxy connection tries the next address from the same validated DNS result. All such attempts share one connection deadline, including proxy dialing, proxy TLS and CONNECT. There is no remote-DNS or direct-connection fallback. TLS verifies the original target hostname, and HTTPS proxy TLS separately verifies the proxy hostname. Environment `HTTP_PROXY` / `HTTPS_PROXY` variables are not consulted.
+
+Original-origin Authorization, Cookie and custom User-Agent headers are preserved. Caller-supplied Host and Proxy-Authorization are removed. Across an origin change (including HTTPS-to-HTTP), Authorization, Cookie and Referer are removed case-insensitively and stay removed through later redirects. Configured proxy credentials are sent only in the CONNECT request. Up to 10 requests are allowed in a redirect chain.
+
+`Timeout` is a stage timeout for DNS, dial, TLS, CONNECT and response headers, defaulting to 30 seconds. It does not impose a total playback/download duration or body idle timer. Callers must retain the request context and cancel it when jobs stop; use `context.WithTimeout` for a total duration limit. Cancellation interrupts response bodies and pending CONNECT handshakes. Callers close response bodies as with a normal `http.Client`.
+
+Tests use local `httptest` servers and injected DNS/dial boundaries. Public-looking test hosts never reach the external network; there are no external Go dependencies.

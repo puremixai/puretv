@@ -1,0 +1,21 @@
+/** @jest-environment node */
+require('./web-globals');
+jest.mock('../src/lib/config',()=>({getConfig:jest.fn(),setCachedConfig:jest.fn()}));
+jest.mock('../src/lib/db',()=>({db:{saveAdminConfig:jest.fn(),getAllUsers:jest.fn(),getUserInfoV2:jest.fn()},getStorage:jest.fn()}));
+jest.mock('../src/lib/email.service',()=>({EmailService:{}}));
+jest.mock('../src/lib/logger',()=>({logger:{debug:jest.fn(),error:jest.fn(),warn:jest.fn()}}));
+jest.mock('../src/lib/magnet.client',()=>({getMagnetBaseUrl:jest.fn(x=>x),universalMagnetFetch:jest.fn()}));
+jest.mock('../src/lib/openlist-offline-download',()=>({addOpenListOfflineDownload:jest.fn(),getOfflineDownloadBasePath:()=>'/anime',joinOpenListPath:(p,n)=>p+'/'+n}));
+const {getConfig,setCachedConfig}=require('../src/lib/config');
+const {db,getStorage}=require('../src/lib/db');
+const {universalMagnetFetch}=require('../src/lib/magnet.client');
+const {addOpenListOfflineDownload}=require('../src/lib/openlist-offline-download');
+const {checkSubscription}=require('../src/lib/anime-subscription');
+const {GoJobError}=require('../src/lib/server/go-jobs');
+const {AnimeDownloadUncertainError}=require('../src/lib/server/go-anime-download');
+let config,sub,events;
+beforeEach(()=>{jest.clearAllMocks();sub={id:'sub1',title:'Anime',filterText:'',source:'acgrip',enabled:true,lastEpisode:0,lastCheckTime:0,createdAt:1,updatedAt:1,createdBy:'alice'};config={ConfigVersion:1,SiteConfig:{},OpenListConfig:{Enabled:true,OfflineDownloadPath:'/anime'},AnimeSubscriptionConfig:{Enabled:true,Subscriptions:[{...sub}]}};events=[];getConfig.mockImplementation(async()=>structuredClone(config));db.saveAdminConfig.mockImplementation(async c=>{events.push('save:'+c.AnimeSubscriptionConfig.Subscriptions[0].lastEpisode);c.ConfigVersion++;config=structuredClone(c)});setCachedConfig.mockResolvedValue();db.getAllUsers.mockResolvedValue(['alice']);db.getUserInfoV2.mockResolvedValue({role:'owner'});getStorage.mockReturnValue({addNotification:jest.fn(async()=>{events.push('notify')})});addOpenListOfflineDownload.mockImplementation(async()=>{events.push('submit');return {replayed:false}});universalMagnetFetch.mockImplementation(async()=>new Response('<rss><channel><item><title>Anime - 01</title><enclosure url="magnet:?xt=one" /></item><item><title>Anime - 02</title><enclosure url="magnet:?xt=two" /></item></channel></rss>'));});
+test('each successful episode persists before next submit and notifications',async()=>{const result=await checkSubscription(sub);expect(result.episodes).toEqual([1,2]);expect(events).toEqual(['submit','save:1','submit','save:2','save:2','notify']);expect(config.AnimeSubscriptionConfig.Subscriptions[0].lastEpisode).toBe(2)});
+test('uncertain submission escapes without recording success',async()=>{addOpenListOfflineDownload.mockRejectedValue(new AnimeDownloadUncertainError('a'.repeat(64)));await expect(checkSubscription(sub)).rejects.toBeInstanceOf(AnimeDownloadUncertainError);expect(db.saveAdminConfig).not.toHaveBeenCalled();expect(events).toEqual([])});
+test('lease loss after submission prevents DB mutation and notification',async()=>{let valid=true;addOpenListOfflineDownload.mockImplementation(async()=>{valid=false;return {replayed:false}});await expect(checkSubscription(sub,()=>{if(!valid)throw new GoJobError(409)})).rejects.toBeInstanceOf(GoJobError);expect(db.saveAdminConfig).not.toHaveBeenCalled()});
+test('replayed success repairs progress without repeated notification',async()=>{addOpenListOfflineDownload.mockResolvedValue({replayed:true});const result=await checkSubscription(sub);expect(result.downloaded).toBe(0);expect(config.AnimeSubscriptionConfig.Subscriptions[0].lastEpisode).toBe(2);expect(events).not.toContain('notify')});

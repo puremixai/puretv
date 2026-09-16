@@ -1,0 +1,75 @@
+name: puretv-local
+
+services:
+  puretv:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: puretv:local
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - .env.docker.local
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+      NEXT_PUBLIC_STORAGE_TYPE: postgres
+      SQLITE_DB_PATH: /app/.data/puretv.db
+      OFFLINE_DOWNLOAD_DIR: /data
+      WATCH_ROOM_ENABLED: "true"
+      WATCH_ROOM_SERVER_TYPE: internal
+      ENABLE_TV_MODE: "true"
+      ALLOW_SERVER_SCRIPTS: "false"
+      DANMAKU_ENABLED: "false"
+      TZ: Asia/Shanghai
+    volumes:
+      - database:/app/.data
+      - downloads:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "scripts/healthcheck.cjs"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    env_file:
+      - .env.postgres.local
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    env_file:
+      - .env.redis.local
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --maxmemory 128mb --maxmemory-policy allkeys-lru --save '' --appendonly no"]
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$REDIS_PASSWORD redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  # Explicit PureTV storage names, independent of the Compose project name.
+  database:
+    name: puretv-local_database
+  downloads:
+    name: puretv-local_downloads
+  postgres:
+    name: puretv-local_postgres

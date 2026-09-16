@@ -1,0 +1,992 @@
+{
+  "version": 1,
+  "files": {
+    "src/app/admin/page.tsx": {
+      "react-hooks/set-state-in-effect": 2,
+      "unused-disable": 2
+    },
+    "src/app/advanced-recommendation/page.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/api/admin/ai/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/admin/config_file/route.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/admin/data_migration/import/route.ts": {
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/app/api/admin/data_migration/progress/route.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/app/api/admin/emby/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/admin/live/refresh/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/admin/migrate-users/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/admin/music/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/admin/theme/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/admin/user/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/admin/users/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/admin/xiaoya/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/advanced-recommendation/sources/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/auth/oidc/callback/route.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/auth/oidc/complete-register/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/auth/oidc/session-info/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/books/history/route.ts": {
+      "@typescript-eslint/no-explicit-any": 2
+    },
+    "src/app/api/books/image/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/app/api/cms-proxy/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/cron/[password]/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/detail/route.ts": {
+      "@typescript-eslint/no-explicit-any": 3
+    },
+    "src/app/api/douban-recommendations/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/app/api/douban/detail/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/app/api/duanju/categories/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/duanju/recommends/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/duanju/sources/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/duanju/videos/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/emby/cms-proxy/[token]/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/emby/image/[token]/[itemId]/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/emby/list/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/emby/play/[token]/[filename]/route.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/app/api/emby/subtitle/[token]/[filename]/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/emby/views/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/live/channels/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/live/epg/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/login/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/manga/history/route.ts": {
+      "@typescript-eslint/no-explicit-any": 2,
+      "unused-imports/no-unused-vars": 3
+    },
+    "src/app/api/manga/shelf/route.ts": {
+      "unused-imports/no-unused-vars": 3
+    },
+    "src/app/api/movie-requests/[id]/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/app/api/music/playlists/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/app/api/music/route.ts": {
+      "unused-disable": 3,
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/app/api/music/v2/discovery/album-songs/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/app/api/music/v2/discovery/artist-songs/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/app/api/music/v2/discovery/board-songs/route.ts": {
+      "@typescript-eslint/no-explicit-any": 2
+    },
+    "src/app/api/music/v2/discovery/boards/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/app/api/music/v2/discovery/songlist-detail/route.ts": {
+      "@typescript-eslint/no-explicit-any": 2
+    },
+    "src/app/api/music/v2/discovery/songlist-tags/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/app/api/music/v2/discovery/songlists/route.ts": {
+      "@typescript-eslint/no-explicit-any": 2
+    },
+    "src/app/api/music/v2/history/route.ts": {
+      "@typescript-eslint/no-explicit-any": 2
+    },
+    "src/app/api/music/v2/play/route.ts": {
+      "@typescript-eslint/no-explicit-any": 2
+    },
+    "src/app/api/music/v2/search/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/app/api/netdisk/115/play/route.ts": {
+      "@typescript-eslint/no-unused-expressions": 1
+    },
+    "src/app/api/netdisk/quark/play/route.ts": {
+      "@typescript-eslint/no-unused-expressions": 1
+    },
+    "src/app/api/netdisk/uc/play/route.ts": {
+      "@typescript-eslint/no-unused-expressions": 1
+    },
+    "src/app/api/notifications/push/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/app/api/openlist/check/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/openlist/cms-proxy/[token]/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/openlist/correct/route.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/app/api/openlist/delete/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/openlist/detail/route.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/openlist/play/[token]/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/openlist/play/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/openlist/proxy/[token]/[filename]/route.ts": {
+      "unused-imports/no-unused-vars": 4
+    },
+    "src/app/api/openlist/refresh-video/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/openlist/refresh/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/playrecords/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/app/api/proxy/vod/key/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/proxy/vod/m3u8/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/proxy/vod/segment/route.ts": {
+      "unused-imports/no-unused-vars": 6
+    },
+    "src/app/api/register/route.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/search/suggestions/route.ts": {
+      "@typescript-eslint/no-explicit-any": 2
+    },
+    "src/app/api/tmdb-details/route.ts": {
+      "@typescript-eslint/no-explicit-any": 2
+    },
+    "src/app/api/tmdb-recommendations/route.ts": {
+      "@typescript-eslint/no-explicit-any": 7
+    },
+    "src/app/api/tmdb/credits/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/tmdb/detail/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/tmdb/episodes/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/tmdb/seasons/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/tmdb/upcoming/route.ts": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/tv-remote/devices/route.ts": {
+      "@typescript-eslint/no-require-imports": 1,
+      "unused-disable": 1
+    },
+    "src/app/api/tv-remote/key/route.ts": {
+      "@typescript-eslint/no-require-imports": 1,
+      "unused-disable": 1
+    },
+    "src/app/api/tv-remote/text/route.ts": {
+      "@typescript-eslint/no-require-imports": 1,
+      "unused-disable": 1
+    },
+    "src/app/api/tvbox/subscribe/route.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/api/xiaoya/browse/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/api/xiaoya/search/route.ts": {
+      "unused-disable": 1
+    },
+    "src/app/books/catalog/page.tsx": {
+      "react-hooks/set-state-in-effect": 4
+    },
+    "src/app/books/detail/page.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/books/history/page.tsx": {
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/app/books/page.tsx": {
+      "@next/next/no-location-assign-relative-destination": 1
+    },
+    "src/app/books/read/page.tsx": {
+      "react-hooks/immutability": 1,
+      "react-hooks/set-state-in-effect": 10
+    },
+    "src/app/books/search/page.tsx": {
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/app/douban/page.tsx": {
+      "react-hooks/set-state-in-effect": 3
+    },
+    "src/app/duanju/page.tsx": {
+      "unused-disable": 1
+    },
+    "src/app/layout.tsx": {
+      "@next/next/no-css-tags": 1,
+      "unused-disable": 3
+    },
+    "src/app/live/page.tsx": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 3
+    },
+    "src/app/login/page.tsx": {
+      "@next/next/no-img-element": 1,
+      "@next/next/no-location-assign-relative-destination": 1,
+      "react-hooks/set-state-in-effect": 3,
+      "unused-imports/no-unused-vars": 4
+    },
+    "src/app/manga/history/page.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/manga/page.tsx": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/manga/read/page.tsx": {
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/refs": 2,
+      "react-hooks/set-state-in-effect": 3
+    },
+    "src/app/manga/search/page.tsx": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/app/movie-request/page.tsx": {
+      "@next/next/no-img-element": 2,
+      "@typescript-eslint/no-explicit-any": 2,
+      "react-hooks/set-state-in-effect": 1,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/music/MusicClient.tsx": {
+      "@next/next/no-img-element": 6,
+      "react-hooks/exhaustive-deps": 6,
+      "react-hooks/immutability": 1,
+      "react-hooks/purity": 4,
+      "react-hooks/set-state-in-effect": 4,
+      "unused-imports/no-unused-vars": 5
+    },
+    "src/app/music/my-playlists/page.tsx": {
+      "@next/next/no-img-element": 2,
+      "@typescript-eslint/no-explicit-any": 6,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/music/rankings/[source]/[playlistId]/page.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/music/rankings/page.tsx": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/music/search/page.tsx": {
+      "@next/next/no-img-element": 2,
+      "@typescript-eslint/no-explicit-any": 1,
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/music/songlists/[source]/[playlistId]/page.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/music/songlists/page.tsx": {
+      "@next/next/no-img-element": 1,
+      "react-hooks/set-state-in-effect": 5,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/oidc-register/page.tsx": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/play/page.tsx": {
+      "react-hooks/immutability": 30,
+      "react-hooks/purity": 2,
+      "react-hooks/refs": 1,
+      "react-hooks/set-state-in-effect": 10,
+      "unused-disable": 2,
+      "unused-imports/no-unused-vars": 10
+    },
+    "src/app/private-library/page.tsx": {
+      "react-hooks/exhaustive-deps": 2,
+      "react-hooks/set-state-in-effect": 4,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/register/page.tsx": {
+      "react-hooks/set-state-in-effect": 2,
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/app/search/page.tsx": {
+      "react-hooks/purity": 2,
+      "react-hooks/refs": 2,
+      "react-hooks/set-state-in-effect": 5,
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/app/source-search/page.tsx": {
+      "unused-disable": 1
+    },
+    "src/app/special/page.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/tv/anime/page.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/tv/detail/page.tsx": {
+      "@next/next/no-img-element": 2,
+      "react-hooks/preserve-manual-memoization": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/tv/live/page.tsx": {
+      "@next/next/no-img-element": 3,
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/app/tv/live/play/page.tsx": {
+      "@next/next/no-img-element": 2,
+      "@typescript-eslint/no-explicit-any": 1,
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/set-state-in-effect": 3
+    },
+    "src/app/tv/login/page.tsx": {
+      "@next/next/no-img-element": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/tv/me/page.tsx": {
+      "@next/next/no-img-element": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/app/tv/play/page.tsx": {
+      "@next/next/no-img-element": 1,
+      "react-hooks/exhaustive-deps": 4,
+      "react-hooks/set-state-in-effect": 4
+    },
+    "src/app/tv/private/page.tsx": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "react-hooks/set-state-in-effect": 3
+    },
+    "src/app/tv/search/page.tsx": {
+      "@next/next/no-img-element": 1
+    },
+    "src/app/watch-room/music/page.tsx": {
+      "@next/next/no-img-element": 3,
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/set-state-in-effect": 1,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/watch-room/page.tsx": {
+      "@typescript-eslint/no-explicit-any": 5,
+      "react-hooks/exhaustive-deps": 2,
+      "react-hooks/purity": 1,
+      "react-hooks/set-state-in-effect": 3,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/watch-room/screen/page.tsx": {
+      "react-hooks/exhaustive-deps": 2,
+      "react-hooks/set-state-in-effect": 2,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/app/web-live/page.tsx": {
+      "@next/next/no-img-element": 9,
+      "@typescript-eslint/no-explicit-any": 17,
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/immutability": 2,
+      "react-hooks/set-state-in-effect": 1,
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/components/AIComments.tsx": {
+      "@next/next/no-img-element": 1
+    },
+    "src/components/AcgSearch.tsx": {
+      "@next/next/no-img-element": 1,
+      "react-hooks/exhaustive-deps": 3,
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/components/AddToPlaylistModal.tsx": {
+      "@next/next/no-img-element": 1,
+      "react-hooks/immutability": 1,
+      "unused-disable": 1
+    },
+    "src/components/AnimeSubscribeModal.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/AnimeSubscriptionComponent.tsx": {
+      "react-hooks/purity": 1,
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/components/BangumiScheduleTimeline.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/BannerCarousel.tsx": {
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/set-state-in-effect": 6
+    },
+    "src/components/CatalogSpotlight.tsx": {
+      "@next/next/no-img-element": 2
+    },
+    "src/components/ContinueWatching.tsx": {
+      "react-hooks/exhaustive-deps": 1
+    },
+    "src/components/CorrectDialog.tsx": {
+      "react-hooks/purity": 1,
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/components/CustomHeatmap.tsx": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/DanmakuFilterSettings.tsx": {
+      "react-hooks/immutability": 1,
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/DanmakuPanel.tsx": {
+      "@next/next/no-img-element": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/DataMigration.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/DetailPanel.tsx": {
+      "@typescript-eslint/no-explicit-any": 16,
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/set-state-in-effect": 4,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/components/DoubanComments.tsx": {
+      "@next/next/no-img-element": 1,
+      "react-hooks/set-state-in-effect": 1,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/components/DoubanRecommendations.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/DownloadBubble.tsx": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/components/DownloadEpisodeSelector.tsx": {
+      "unused-disable": 1
+    },
+    "src/components/DownloadManagementPanel.tsx": {
+      "@typescript-eslint/no-explicit-any": 2,
+      "react-hooks/immutability": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/Drawer.tsx": {
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/components/EpgScrollableRow.tsx": {
+      "@typescript-eslint/no-explicit-any": 4,
+      "react-hooks/immutability": 1,
+      "unused-imports/no-unused-vars": 3
+    },
+    "src/components/EpisodeFilterSettings.tsx": {
+      "react-hooks/immutability": 1,
+      "react-hooks/set-state-in-effect": 2,
+      "unused-disable": 1
+    },
+    "src/components/EpisodeSelector.tsx": {
+      "react-hooks/set-state-in-effect": 4,
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/components/FavoritesPanel.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/FireworksCanvas.tsx": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/HttpWarningDialog.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/ImageViewer.tsx": {
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/components/LyricsPiPWindow.tsx": {
+      "react-hooks/exhaustive-deps": 1,
+      "unused-imports/no-unused-vars": 5
+    },
+    "src/components/MobileActionSheet.tsx": {
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/components/MobileBottomNav.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/NotificationPanel.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/OfflineDownloadPanel.tsx": {
+      "@next/next/no-img-element": 1,
+      "react-hooks/set-state-in-effect": 2,
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/components/PageLayout.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/PansouSearch.tsx": {
+      "@next/next/no-img-element": 1,
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/components/PlayRecordsPanel.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/ProxyImage.tsx": {
+      "@next/next/no-img-element": 1,
+      "jsx-a11y/alt-text": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/SearchSuggestions.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/Sidebar.tsx": {
+      "react-hooks/set-state-in-effect": 3
+    },
+    "src/components/SmartRecommendations.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/ThemeToggle.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/TokenRefreshManager.tsx": {
+      "@next/next/no-location-assign-relative-destination": 3,
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/components/TopProgressBar.tsx": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "react-hooks/immutability": 2,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/components/TrailerPickerDialog.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/UpdateNotification.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/UserMenu.tsx": {
+      "@next/next/no-img-element": 4,
+      "@next/next/no-location-assign-relative-destination": 3,
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/immutability": 1,
+      "react-hooks/set-state-in-effect": 8,
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/components/VersionPanel.tsx": {
+      "react-hooks/set-state-in-effect": 2,
+      "unused-disable": 1
+    },
+    "src/components/VideoCard.tsx": {
+      "@next/next/no-location-assign-relative-destination": 2,
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 4
+    },
+    "src/components/VirtualScrollableGrid.tsx": {
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/refs": 1
+    },
+    "src/components/VirtualScrollableRow.tsx": {
+      "react-hooks/exhaustive-deps": 2
+    },
+    "src/components/WatchRoomProvider.tsx": {
+      "@typescript-eslint/no-explicit-any": 3,
+      "react-hooks/exhaustive-deps": 2,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/admin/AIConfigComponent.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/admin/AdminPanel.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/admin/AdminWorkspace.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/admin/CategoryConfig.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 3
+    },
+    "src/components/admin/ConfigFileComponent.tsx": {
+      "react-hooks/preserve-manual-memoization": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/admin/CustomAdFilterConfig.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 4
+    },
+    "src/components/admin/EmailConfigComponent.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/admin/EmbyConfigComponent.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 4
+    },
+    "src/components/admin/LiveSourceConfig.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/admin/MovieRequestsComponent.tsx": {
+      "@next/next/no-img-element": 1,
+      "react-hooks/immutability": 2,
+      "unused-disable": 2
+    },
+    "src/components/admin/MusicConfigComponent.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/admin/NetDiskConfigComponent.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/admin/OPDSConfigComponent.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/admin/OpenListConfigComponent.tsx": {
+      "react-hooks/immutability": 1,
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 3
+    },
+    "src/components/admin/RegistrationConfigComponent.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 4
+    },
+    "src/components/admin/SiteConfigComponent.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 4
+    },
+    "src/components/admin/SuwayomiConfigComponent.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/admin/TelegramConfigComponent.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/admin/ThemeConfigComponent.tsx": {
+      "@next/next/no-img-element": 2,
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/admin/UserConfig.tsx": {
+      "unused-disable": 2,
+      "unused-imports/no-unused-vars": 3
+    },
+    "src/components/admin/VideoSourceConfig.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 2,
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/components/admin/VideoSourceScriptLab.tsx": {
+      "react-hooks/set-state-in-effect": 2,
+      "unused-disable": 4
+    },
+    "src/components/admin/WebLiveConfig.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 4,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/components/admin/XiaoyaConfigComponent.tsx": {
+      "react-hooks/set-state-in-effect": 1,
+      "unused-disable": 1
+    },
+    "src/components/admin/shared.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/books/BooksLayout.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/home/HomePageClient.tsx": {
+      "@next/next/no-location-assign-relative-destination": 2,
+      "react-hooks/set-state-in-effect": 8,
+      "unused-disable": 2
+    },
+    "src/components/manga/MangaHistoryCard.tsx": {
+      "react-hooks/exhaustive-deps": 1
+    },
+    "src/components/music/SongList.tsx": {
+      "@next/next/no-img-element": 1
+    },
+    "src/components/player/types.ts": {
+      "unused-disable": 1
+    },
+    "src/components/player/usePlayerEngine.ts": {
+      "unused-disable": 2,
+      "unused-imports/no-unused-vars": 5
+    },
+    "src/components/tv/TVBrowsePage.tsx": {
+      "@next/next/no-img-element": 2
+    },
+    "src/components/tv/TVCard.tsx": {
+      "@next/next/no-img-element": 1
+    },
+    "src/components/tv/TVRemotePanel.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/tv/player/TVNativeVideo.tsx": {
+      "@typescript-eslint/no-explicit-any": 10,
+      "unused-disable": 1
+    },
+    "src/components/watch-room/ChatFloatingWindow.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/hooks/useEnableAIComments.ts": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/hooks/useEnableComments.ts": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/hooks/usePlaySync.ts": {
+      "@typescript-eslint/no-explicit-any": 2,
+      "react-hooks/exhaustive-deps": 1
+    },
+    "src/hooks/useRecommendationDataSource.ts": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/hooks/useSavedAIComments.ts": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/hooks/useScreenShare.ts": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "react-hooks/exhaustive-deps": 2
+    },
+    "src/hooks/useVoiceChat.ts": {
+      "@typescript-eslint/no-explicit-any": 3,
+      "react-hooks/exhaustive-deps": 2
+    },
+    "src/lib/ai-comment-generator.ts": {
+      "@typescript-eslint/no-explicit-any": 4
+    },
+    "src/lib/ai-tool-agent.ts": {
+      "unused-disable": 2
+    },
+    "src/lib/anime-keyword-expr.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/lib/artplayer-plugin-auto-thumbnail.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/lib/auth-cookie.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/auth.ts": {
+      "unused-imports/no-unused-vars": 4
+    },
+    "src/lib/bangumi-schedule.server.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/lib/bangumi.client.ts": {
+      "@typescript-eslint/no-explicit-any": 2
+    },
+    "src/lib/book-tts.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/cloudflare-shims/node-unsupported.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/lib/cloudflare-shims/opencc-js.ts": {
+      "import/no-anonymous-default-export": 1
+    },
+    "src/lib/config.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/lib/crypto.ts": {
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/lib/db.client.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/douban.client.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/downstream.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/lib/duanju.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/emby-cache.ts": {
+      "@typescript-eslint/no-explicit-any": 5
+    },
+    "src/lib/emby-manager.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/emby-token.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/lib/emby.client.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/lib/kvrocks.db.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/legado.client.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/lib/live.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 3
+    },
+    "src/lib/local-settings-sync.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/m3u8-downloader.ts": {
+      "@typescript-eslint/no-explicit-any": 1,
+      "@typescript-eslint/no-unused-expressions": 1
+    },
+    "src/lib/music-v2.ts": {
+      "@typescript-eslint/no-explicit-any": 5
+    },
+    "src/lib/music/shared.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/lib/nfo-parser.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/offline-downloader.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/lib/pancheck/index.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/pancheck/vendor/checkers/baidu.ts": {
+      "unused-imports/no-unused-vars": 2
+    },
+    "src/lib/pancheck/vendor/checkers/pan123.ts": {
+      "unused-imports/no-unused-vars": 3
+    },
+    "src/lib/pancheck/vendor/checkers/xunlei.ts": {
+      "unused-imports/no-unused-vars": 3
+    },
+    "src/lib/pancheck/vendor/http.js": {
+      "@typescript-eslint/no-require-imports": 3,
+      "unused-disable": 3
+    },
+    "src/lib/redis-adapter.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/redis-base.db.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/redis.db.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/refresh-token.ts": {
+      "@typescript-eslint/no-explicit-any": 16
+    },
+    "src/lib/scan-task.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/source-script.ts": {
+      "unused-disable": 2
+    },
+    "src/lib/special-sources-detail.ts": {
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/lib/tmdb-image-base.ts": {
+      "@typescript-eslint/no-explicit-any": 1
+    },
+    "src/lib/tmdb.search.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/types.ts": {
+      "@typescript-eslint/no-explicit-any": 5
+    },
+    "src/lib/upstash.db.ts": {
+      "unused-disable": 1
+    },
+    "src/lib/web-push.ts": {
+      "@typescript-eslint/no-explicit-any": 6
+    },
+    "src/lib/xiaoya-metadata.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 1
+    },
+    "src/lib/xiaoya.client.ts": {
+      "unused-disable": 1,
+      "unused-imports/no-unused-vars": 1
+    }
+  }
+}

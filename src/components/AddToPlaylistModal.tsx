@@ -1,0 +1,360 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+import { logger } from '@/lib/logger';
+
+import ProxyImage from '@/components/ProxyImage';
+
+interface Song {
+  id: string;
+  name: string;
+  artist: string;
+  album?: string;
+  pic?: string;
+  platform: 'wy' | 'tx' | 'kw' | 'kg' | 'mg';
+  duration?: number;
+}
+
+interface MusicPlaylist {
+  id: string;
+  username: string;
+  name: string;
+  description?: string;
+  cover?: string;
+  created_at: number;
+  updated_at: number;
+}
+
+interface AddToPlaylistModalProps {
+  song: Song | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+  onError?: (message: string) => void;
+}
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message;
+  }
+  return fallback;
+}
+
+function MusicLoadingIndicator({
+  text,
+  size = 'md',
+  className = '',
+}: {
+  text?: string;
+  size?: 'sm' | 'md';
+  className?: string;
+}) {
+  const iconSize = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5';
+  const textSize = size === 'sm' ? 'text-xs' : 'text-sm';
+
+  return (
+    <>
+      <style jsx>{`
+        @keyframes music-note-bounce {
+          0%,
+          100% {
+            transform: translateY(0);
+            opacity: 0.55;
+          }
+          50% {
+            transform: translateY(-8px);
+            opacity: 1;
+          }
+        }
+      `}</style>
+      <div className={`flex items-center justify-center gap-3 text-zinc-400 ${className}`}>
+        <div className="flex items-end gap-1.5">
+          {[0, 1, 2].map((index) => (
+            <svg
+              key={index}
+              className={`${iconSize} text-green-400`}
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              style={{ animation: `music-note-bounce 0.9s ease-in-out ${index * 0.14}s infinite` }}
+            >
+              <path d="M12 3v11.55A3.98 3.98 0 0010 14c-2.21 0-4 1.34-4 3s1.79 3 4 3 4-1.34 4-3V8h4V3h-6z" />
+            </svg>
+          ))}
+        </div>
+        {text ? <span className={`${textSize} font-medium tracking-wide`}>{text}</span> : null}
+      </div>
+    </>
+  );
+}
+
+export default function AddToPlaylistModal({
+  song,
+  isOpen,
+  onClose,
+  onSuccess,
+  onError,
+}: AddToPlaylistModalProps) {
+  const [playlists, setPlaylists] = useState<MusicPlaylist[]>([]);
+  const [playlistRequest, setPlaylistRequest] = useState({
+    isOpen,
+    revision: 0,
+    loading: isOpen,
+  });
+  const loading = playlistRequest.loading;
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [newPlaylistDescription, setNewPlaylistDescription] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [addingToPlaylistId, setAddingToPlaylistId] = useState<string | null>(null); // 正在添加的歌单ID
+
+  // 每次打开都开始新的读取，加载状态与本次打开一起提交。
+  if (playlistRequest.isOpen !== isOpen) {
+    setPlaylistRequest({
+      isOpen,
+      revision: playlistRequest.revision + 1,
+      loading: isOpen,
+    });
+  }
+
+  // 加载用户的歌单列表
+  useEffect(() => {
+    if (!isOpen) return;
+    const controller = new AbortController();
+    let cancelled = false;
+
+    fetch('/api/music/v2/playlists', { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('加载歌单失败');
+        return response.json();
+      })
+      .then((data) => {
+        if (!cancelled) setPlaylists(data.data?.playlists || []);
+      })
+      .catch((error) => {
+        if (!cancelled) logger.error('加载歌单失败:', error);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setPlaylistRequest((previous) => ({ ...previous, loading: false }));
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [isOpen, playlistRequest.revision]);
+
+  const handleCreatePlaylist = async () => {
+    if (!newPlaylistName.trim()) {
+      onError?.('请输入歌单名称');
+      return;
+    }
+
+    try {
+      setCreating(true);
+      const response = await fetch('/api/music/v2/playlists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newPlaylistName.trim(),
+          description: newPlaylistDescription.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        setNewPlaylistName('');
+        setNewPlaylistDescription('');
+        setShowCreateForm(false);
+        setPlaylistRequest((previous) => ({
+          ...previous,
+          revision: previous.revision + 1,
+          loading: true,
+        }));
+      } else {
+        const data = await response.json();
+        onError?.(getApiErrorMessage(data.error, '创建歌单失败'));
+      }
+    } catch (error) {
+      logger.error('创建歌单失败:', error);
+      onError?.('创建歌单失败');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleAddToPlaylist = async (playlistId: string) => {
+    if (!song) return;
+
+    try {
+      setAddingToPlaylistId(playlistId);
+      const response = await fetch(`/api/music/v2/playlists/${playlistId}/songs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          song: {
+            source: song.platform,
+            songId: song.id,
+            name: song.name,
+            artist: song.artist,
+            album: song.album,
+            cover: song.pic,
+            durationSec: song.duration || 0,
+          },
+        }),
+      });
+
+      if (response.ok) {
+        onSuccess?.();
+        onClose();
+      } else {
+        const data = await response.json();
+        onError?.(getApiErrorMessage(data.error, '添加失败'));
+      }
+    } catch (error) {
+      logger.error('添加到歌单失败:', error);
+      onError?.('添加到歌单失败');
+    } finally {
+      setAddingToPlaylistId(null);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-xs z-110 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-zinc-900 rounded-xl max-w-md w-full max-h-[80vh] overflow-hidden border border-white/10"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="p-4 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-white">添加到歌单</h3>
+            <button
+              onClick={onClose}
+              className="text-zinc-400 hover:text-white transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          {song && (
+            <div className="mt-2 text-sm text-zinc-400">
+              {song.name} - {song.artist}
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="p-4 overflow-y-auto max-h-[calc(80vh-120px)]">
+          {/* Create New Playlist Button */}
+          {!showCreateForm && (
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="w-full mb-4 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              创建新歌单
+            </button>
+          )}
+
+          {/* Create Form */}
+          {showCreateForm && (
+            <div className="mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
+              <input
+                type="text"
+                placeholder="歌单名称"
+                value={newPlaylistName}
+                onChange={(e) => setNewPlaylistName(e.target.value)}
+                className="w-full px-3 py-2 bg-zinc-800 text-white rounded-lg border border-white/10 focus:border-green-500 focus:outline-hidden mb-2"
+              />
+              <textarea
+                placeholder="歌单描述（可选）"
+                value={newPlaylistDescription}
+                onChange={(e) => setNewPlaylistDescription(e.target.value)}
+                className="w-full px-3 py-2 bg-zinc-800 text-white rounded-lg border border-white/10 focus:border-green-500 focus:outline-hidden resize-none"
+                rows={2}
+              />
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={handleCreatePlaylist}
+                  disabled={creating}
+                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-zinc-700 text-white rounded-lg transition-colors flex items-center justify-center"
+                >
+                  {creating ? <MusicLoadingIndicator size="sm" className="gap-2 text-white" /> : '确定'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setNewPlaylistName('');
+                    setNewPlaylistDescription('');
+                  }}
+                  className="flex-1 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Playlists List */}
+          {loading ? (
+            <MusicLoadingIndicator className="py-8" />
+          ) : playlists.length === 0 ? (
+            <div className="text-center py-8 text-zinc-400">
+              还没有歌单，创建一个吧
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {playlists.map((playlist) => (
+                <button
+                  key={playlist.id}
+                  onClick={() => handleAddToPlaylist(playlist.id)}
+                  disabled={addingToPlaylistId !== null}
+                  className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 disabled:bg-white/5 disabled:cursor-not-allowed rounded-lg transition-colors text-left flex items-center gap-3"
+                >
+                  {playlist.cover ? (
+                    <ProxyImage
+                      originalSrc={playlist.cover}
+                      alt={playlist.name}
+                      className="w-12 h-12 rounded-sm object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-sm bg-zinc-800 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white font-medium truncate">{playlist.name}</div>
+                    {playlist.description && (
+                      <div className="text-xs text-zinc-500 truncate">{playlist.description}</div>
+                    )}
+                  </div>
+                  {addingToPlaylistId === playlist.id ? (
+                    <MusicLoadingIndicator size="sm" className="gap-1" />
+                  ) : (
+                    <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

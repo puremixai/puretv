@@ -1,0 +1,89 @@
+name: Go worker checks
+on:
+  push:
+    paths:
+      - 'services/go-worker/**'
+      - 'compose.go-worker.yaml'
+      - 'src/lib/server/go-*.ts'
+      - 'src/lib/server/config-subscriptions.ts'
+      - 'src/lib/openlist*.ts'
+      - 'src/lib/anime-subscription.ts'
+      - 'src/lib/downstream.ts'
+      - 'src/lib/live.ts'
+      - 'src/lib/tmdb.client.ts'
+      - 'src/lib/tmdb.search.ts'
+      - 'src/app/api/admin/anime-subscription/**'
+      - 'src/lib/bangumi.server.ts'
+      - 'src/app/api/live/**'
+      - 'src/app/api/netdisk/check/**'
+      - 'src/app/api/source-search/**'
+      - 'src/app/api/openlist/**'
+      - 'src/app/api/cron/**'
+      - 'src/app/api/danmaku/**'
+      - 'src/lib/openlist-refresh.ts'
+      - 'src/app/api/offline-download/**'
+      - 'tests/go-*.test.js'
+      - '.github/workflows/go-worker.yml'
+  pull_request:
+    paths:
+      - 'services/go-worker/**'
+      - 'compose.go-worker.yaml'
+      - 'src/lib/server/go-*.ts'
+      - 'src/lib/server/config-subscriptions.ts'
+      - 'src/lib/openlist*.ts'
+      - 'src/lib/anime-subscription.ts'
+      - 'src/lib/downstream.ts'
+      - 'src/lib/live.ts'
+      - 'src/lib/tmdb.client.ts'
+      - 'src/lib/tmdb.search.ts'
+      - 'src/app/api/admin/anime-subscription/**'
+      - 'src/lib/bangumi.server.ts'
+      - 'src/app/api/live/**'
+      - 'src/app/api/netdisk/check/**'
+      - 'src/app/api/source-search/**'
+      - 'src/app/api/openlist/**'
+      - 'src/app/api/cron/**'
+      - 'src/app/api/danmaku/**'
+      - 'src/lib/openlist-refresh.ts'
+      - 'src/app/api/offline-download/**'
+      - 'tests/go-*.test.js'
+      - '.github/workflows/go-worker.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            go: '1.27.x'
+          - os: windows-latest
+            go: '1.25.x'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false
+      - run: go vet ./...
+        working-directory: services/go-worker
+      - run: go test -race ./... -count=1 -timeout=120s
+        working-directory: services/go-worker
+        if: runner.os == 'Linux'
+      - run: go test ./... -count=1 -timeout=120s
+        working-directory: services/go-worker
+        if: runner.os == 'Windows'
+      - run: go build -o bin/puretv-worker.exe ./cmd/puretv-worker
+        working-directory: services/go-worker
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.14.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec jest --testPathPatterns="go-" --runInBand
+        env:
+          PURETV_GO_TEST_BINARY: ${{ github.workspace }}/services/go-worker/bin/puretv-worker.exe

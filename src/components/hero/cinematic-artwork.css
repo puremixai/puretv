@@ -1,0 +1,83 @@
+.cinematic-artwork {
+  position: absolute;
+  inset: -6% 0;
+  isolation: isolate;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--artwork-tone, #18232e);
+  transform: translate3d(0, var(--hero-parallax-y, 0px), 0);
+  transition: background-color 700ms ease;
+}
+.cinematic-artwork-image,
+.cinematic-artwork-atmosphere,
+.cinematic-artwork-wash {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.cinematic-artwork-image {
+  object-fit: cover;
+  transform: scale(1);
+}
+.cinematic-artwork-atmosphere {
+  background-size: cover;
+  background-position: center;
+  filter: blur(28px);
+  transform: scale(1.15);
+  opacity: 0.7;
+}
+.cinematic-artwork-wash {
+  background: linear-gradient(180deg, transparent 45%, var(--artwork-tone));
+  opacity: 0.35;
+}
+.cinematic-artwork[data-state='error'] .cinematic-artwork-image {
+  visibility: hidden;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cinematic-artwork[data-active='true'][data-state='ready']
+    .cinematic-artwork-image {
+    animation:
+      cinematic-artwork-resolve 900ms ease-out both,
+      cinematic-artwork-zoom 7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .cinematic-artwork[data-active='true'][data-paused='true']
+    .cinematic-artwork-image {
+    /* Resolving a newly loaded image must finish even when rotation is paused. */
+    animation-play-state: running, paused;
+  }
+}
+@keyframes cinematic-artwork-resolve {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes cinematic-artwork-zoom {
+  from {
+    transform: scale(var(--artwork-zoom, 1.16));
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@media (max-width: 767px), (pointer: coarse) {
+  .cinematic-artwork {
+    --artwork-zoom: 1.04;
+  }
+  .cinematic-artwork-atmosphere {
+    filter: blur(16px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cinematic-artwork {
+    transform: none;
+    transition: none;
+  }
+  .cinematic-artwork-image {
+    animation: none;
+    transform: none;
+  }
+}

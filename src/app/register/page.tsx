@@ -1,0 +1,474 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+'use client';
+
+import { AlertCircle, CheckCircle, Eye, EyeOff, Lock,Send, User } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+
+import { PROJECT_NAME, PROJECT_REPOSITORY_URL } from '@/lib/project';
+import { CURRENT_VERSION } from '@/lib/version';
+import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
+
+import { useSite } from '@/components/SiteProvider';
+import { ThemeToggle } from '@/components/ThemeToggle';
+
+// 版本显示组件
+function VersionDisplay() {
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null);
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    const checkUpdate = async () => {
+      try {
+        const status = await checkForUpdates();
+        setUpdateStatus(status);
+      } catch {
+        // do nothing
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkUpdate();
+  }, []);
+
+  return (
+    <button
+      onClick={() =>
+        window.open(PROJECT_REPOSITORY_URL, '_blank', 'noopener,noreferrer')
+      }
+      className='absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 transition-colors cursor-pointer'
+    >
+      <span className='font-mono'>{PROJECT_NAME} v{CURRENT_VERSION}</span>
+      {!isChecking && updateStatus !== UpdateStatus.FETCH_FAILED && (
+        <div
+          className={`flex items-center gap-1.5 ${updateStatus === UpdateStatus.HAS_UPDATE
+            ? 'text-yellow-600 dark:text-yellow-400'
+            : updateStatus === UpdateStatus.NO_UPDATE
+              ? 'text-green-600 dark:text-green-400'
+              : ''
+            }`}
+        >
+          {updateStatus === UpdateStatus.HAS_UPDATE && (
+            <>
+              <AlertCircle className='w-3.5 h-3.5' />
+              <span className='font-semibold text-xs'>有新版本</span>
+            </>
+          )}
+          {updateStatus === UpdateStatus.NO_UPDATE && (
+            <>
+              <CheckCircle className='w-3.5 h-3.5' />
+              <span className='font-semibold text-xs'>已是最新</span>
+            </>
+          )}
+        </div>
+      )}
+    </button>
+  );
+}
+
+function RegisterPageClient() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileLoaded, setTurnstileLoaded] = useState(false);
+  const [siteConfig, setSiteConfig] = useState<any>(null);
+  const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(null);
+  const [backgroundImage, setBackgroundImage] = useState<string>('');
+  const [registerSuccess, setRegisterSuccess] = useState(false);
+  const [telegramBind, setTelegramBind] = useState<{ code: string; deepLink?: string } | null>(null);
+
+  const { siteName } = useSite();
+
+  // 在客户端挂载后设置配置
+  useEffect(() => {
+    const runtimeConfig = (window as any).RUNTIME_CONFIG;
+
+    // 设置背景图（支持多张随机选择）
+    const registerBg = runtimeConfig?.REGISTER_BACKGROUND_IMAGE;
+    if (registerBg) {
+      const urls = registerBg
+        .split('\n')
+        .map((url: string) => url.trim())
+        .filter((url: string) => url !== '');
+
+      if (urls.length > 0) {
+        // 随机选择一张背景图
+        const randomIndex = Math.floor(Math.random() * urls.length);
+        setBackgroundImage(urls[randomIndex]);
+      }
+    }
+
+    // 设置站点配置
+    const config = {
+      EnableRegistration: runtimeConfig?.ENABLE_REGISTRATION || false,
+      RequireRegistrationInviteCode: runtimeConfig?.REQUIRE_REGISTRATION_INVITE_CODE || false,
+      RegistrationRequireTurnstile: runtimeConfig?.REGISTRATION_REQUIRE_TURNSTILE || false,
+      TurnstileSiteKey: runtimeConfig?.TURNSTILE_SITE_KEY || '',
+    };
+    setSiteConfig(config);
+
+    // 如果未开启注册，重定向到登录页
+    if (!config.EnableRegistration) {
+      router.replace('/login');
+    }
+  }, [router]);
+
+  // 加载Cloudflare Turnstile脚本
+  useEffect(() => {
+    if (!siteConfig?.RegistrationRequireTurnstile || !siteConfig?.TurnstileSiteKey) {
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      setTurnstileLoaded(true);
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [siteConfig]);
+
+  // 渲染Turnstile组件
+  useEffect(() => {
+    if (!turnstileLoaded || !siteConfig?.TurnstileSiteKey) {
+      return;
+    }
+
+    const container = document.getElementById('turnstile-container');
+    if (container && (window as any).turnstile) {
+      const widgetId = (window as any).turnstile.render('#turnstile-container', {
+        sitekey: siteConfig.TurnstileSiteKey,
+        callback: (token: string) => {
+          setTurnstileToken(token);
+        },
+      });
+      setTurnstileWidgetId(widgetId);
+      return;
+    }
+  }, [turnstileLoaded, siteConfig]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!username || !password || !confirmPassword) {
+      setError('请填写所有字段');
+      return;
+    }
+
+    if (siteConfig?.RequireRegistrationInviteCode && !inviteCode.trim()) {
+      setError('请输入邀请码');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('两次输入的密码不一致');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('密码长度至少为6位');
+      return;
+    }
+
+    // 检查Turnstile验证
+    if (siteConfig?.RegistrationRequireTurnstile && !turnstileToken) {
+      setError('请完成人机验证');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          password,
+          inviteCode: siteConfig?.RequireRegistrationInviteCode ? inviteCode.trim() : undefined,
+          turnstileToken: siteConfig?.RegistrationRequireTurnstile ? turnstileToken : undefined,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data.telegramBind?.code) {
+          setTelegramBind({
+            code: data.telegramBind.code,
+            deepLink: data.telegramBind.deepLink || '',
+          });
+          setRegisterSuccess(true);
+          return;
+        }
+
+        // 注册成功，跳转到登录页
+        const redirect = searchParams.get('redirect') || '/login';
+        router.replace(redirect);
+      } else {
+        // 注册失败，重置Turnstile
+        if (siteConfig?.RegistrationRequireTurnstile && turnstileWidgetId !== null && (window as any).turnstile) {
+          (window as any).turnstile.reset(turnstileWidgetId);
+          setTurnstileToken(null);
+        }
+
+        if (res.status === 400) {
+          const data = await res.json().catch(() => ({}));
+          setError(data.error || '注册失败');
+        } else if (res.status === 409) {
+          setError('用户名已存在');
+        } else {
+          const data = await res.json().catch(() => ({}));
+          setError(data.error ?? '服务器错误');
+        }
+      }
+    } catch {
+      // 网络错误，重置Turnstile
+      if (siteConfig?.RegistrationRequireTurnstile && turnstileWidgetId !== null && (window as any).turnstile) {
+        (window as any).turnstile.reset(turnstileWidgetId);
+        setTurnstileToken(null);
+      }
+      setError('网络错误，请稍后重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 如果配置未加载或未开启注册，显示加载中
+  if (!siteConfig) {
+    return (
+      <div className='cinema-auth relative min-h-screen flex items-center justify-center px-4'>
+        <div className='text-gray-500 dark:text-gray-400'>加载中...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className='cinema-auth relative min-h-screen flex items-center justify-center px-4 overflow-hidden'
+      style={backgroundImage ? {
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      } : undefined}
+    >
+      <div className='absolute top-4 right-4'>
+        <ThemeToggle />
+      </div>
+      <div className='cinema-auth-card relative z-10 w-full max-w-md rounded-3xl bg-linear-to-b from-white/90 via-white/70 to-white/40 dark:from-zinc-900/90 dark:via-zinc-900/70 dark:to-zinc-900/40 shadow-2xl p-10 dark:border dark:border-zinc-800'>
+        <h1 className='text-green-600 tracking-tight text-center text-3xl font-extrabold mb-2 bg-clip-text drop-shadow-xs'>
+          {siteName}
+        </h1>
+        <p className='text-center text-sm text-gray-600 dark:text-gray-400 mb-8'>
+          创建新账号
+        </p>
+        {registerSuccess ? (
+          <div className='space-y-5'>
+            <div className='rounded-2xl border border-green-200 bg-green-50 p-4 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-200'>
+              <div className='mb-2 flex items-center gap-2 font-semibold'>
+                <CheckCircle className='h-5 w-5' />
+                注册成功
+              </div>
+              <p className='text-sm'>账号已创建。你可以现在绑定 Telegram，用于接收通知和后续快捷登录。</p>
+            </div>
+
+            {telegramBind && (
+              <div className='rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sky-900 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-100'>
+                <div className='mb-3 flex items-center gap-2 font-semibold'>
+                  <Send className='h-5 w-5' />
+                  Telegram 绑定
+                </div>
+                <p className='text-sm'>在 Bot 中发送：</p>
+                <div className='my-3 rounded-lg bg-white/80 px-3 py-2 font-mono text-lg font-bold tracking-widest dark:bg-zinc-900/70'>
+                  /bind {telegramBind.code}
+                </div>
+                {telegramBind.deepLink && (
+                  <button
+                    type='button'
+                    onClick={() => window.open(telegramBind.deepLink, '_blank', 'noopener,noreferrer')}
+                    className='mb-3 inline-flex w-full items-center justify-center rounded-lg bg-sky-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sky-700'
+                  >
+                    打开 Telegram
+                  </button>
+                )}
+                <p className='text-xs opacity-80'>绑定码 10 分钟内有效，也可稍后登录后在通知设置中重新生成。</p>
+              </div>
+            )}
+
+            <button
+              type='button'
+              onClick={() => router.replace(searchParams.get('redirect') || '/login')}
+              className='inline-flex w-full justify-center rounded-lg bg-green-600 py-3 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:bg-green-700'
+            >
+              前往登录
+            </button>
+          </div>
+        ) : (
+        <form onSubmit={handleSubmit} className='space-y-6'>
+          <div>
+            <label htmlFor='username' className='sr-only'>
+              用户名
+            </label>
+            <div className='relative'>
+              <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+                <User className='h-5 w-5 text-gray-400 dark:text-gray-500' />
+              </div>
+              <input
+                id='username'
+                type='text'
+                autoComplete='username'
+                className='block w-full rounded-lg border-0 py-3 pl-10 pr-4 text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-hidden sm:text-base bg-white/60 dark:bg-zinc-800/60'
+                placeholder='输入用户名'
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor='password' className='sr-only'>
+              密码
+            </label>
+            <div className='relative'>
+              <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+                <Lock className='h-5 w-5 text-gray-400 dark:text-gray-500' />
+              </div>
+              <input
+                id='password'
+                type={showPassword ? 'text' : 'password'}
+                autoComplete='new-password'
+                className='block w-full rounded-lg border-0 py-3 pl-10 pr-12 text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-hidden sm:text-base bg-white/60 dark:bg-zinc-800/60'
+                placeholder='输入密码（至少6位）'
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type='button'
+                className='absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff className='h-5 w-5' />
+                ) : (
+                  <Eye className='h-5 w-5' />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor='confirmPassword' className='sr-only'>
+              确认密码
+            </label>
+            <div className='relative'>
+              <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+                <Lock className='h-5 w-5 text-gray-400 dark:text-gray-500' />
+              </div>
+              <input
+                id='confirmPassword'
+                type={showConfirmPassword ? 'text' : 'password'}
+                autoComplete='new-password'
+                className='block w-full rounded-lg border-0 py-3 pl-10 pr-12 text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-hidden sm:text-base bg-white/60 dark:bg-zinc-800/60'
+                placeholder='再次输入密码'
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              <button
+                type='button'
+                className='absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className='h-5 w-5' />
+                ) : (
+                  <Eye className='h-5 w-5' />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {siteConfig?.RequireRegistrationInviteCode && (
+            <div>
+              <label htmlFor='inviteCode' className='sr-only'>
+                邀请码
+              </label>
+              <div className='relative'>
+                <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+                  <User className='h-5 w-5 text-gray-400 dark:text-gray-500' />
+                </div>
+                <input
+                  id='inviteCode'
+                  type='text'
+                  className='block w-full rounded-lg border-0 py-3 pl-10 pr-4 text-gray-900 dark:text-gray-100 shadow-xs ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-hidden sm:text-base bg-white/60 dark:bg-zinc-800/60'
+                  placeholder='输入邀请码'
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Cloudflare Turnstile */}
+          {siteConfig?.RegistrationRequireTurnstile && siteConfig?.TurnstileSiteKey && (
+            <div id='turnstile-container' className='flex justify-center'></div>
+          )}
+
+          {error && (
+            <p className='text-sm text-red-600 dark:text-red-400'>{error}</p>
+          )}
+
+          {/* 注册按钮 */}
+          <button
+            type='submit'
+            disabled={
+              !username || !password || !confirmPassword || loading ||
+              (siteConfig?.RequireRegistrationInviteCode && !inviteCode.trim()) ||
+              (siteConfig?.RegistrationRequireTurnstile && !turnstileToken)
+            }
+            className='inline-flex w-full justify-center rounded-lg bg-green-600 py-3 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:from-green-600 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50'
+          >
+            {loading ? '注册中...' : '注册'}
+          </button>
+
+          {/* 返回登录链接 */}
+          <div className='text-center'>
+            <button
+              type='button'
+              onClick={() => router.push('/login')}
+              className='text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors'
+            >
+              已有账号？返回登录
+            </button>
+          </div>
+        </form>
+        )}
+      </div>
+
+      {/* 版本信息显示 */}
+      <VersionDisplay />
+    </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RegisterPageClient />
+    </Suspense>
+  );
+}

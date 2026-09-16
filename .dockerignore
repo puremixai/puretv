@@ -1,0 +1,30 @@
+.env
+.env*.local
+node_modules/
+.next/
+.next-dev/
+.swc/
+.data/
+.codex/
+.git/
+.open-next/
+.edgeone/
+.wrangler/
+coverage/
+*.tsbuildinfo
+**/*.db
+**/*.db-shm
+**/*.db-wal
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
+public/screenshot1.png
+public/screenshot2.png
+public/screenshot3.png
+
+# Android/TV native app sources are not needed in Docker image builds
+apps/
+
+# Go worker has its own build context and image.
+services/go-worker/

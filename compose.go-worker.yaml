@@ -1,0 +1,89 @@
+# Optional overlay: explicitly combine with compose.local.yaml.
+# Store interpolation variables in an untracked .env.go-worker.local file.
+services:
+  puretv:
+    environment:
+      PURETV_GO_URL: http://puretv-go:8081
+      PURETV_GO_TOKEN: ${PURETV_GO_TOKEN:?Set an independent worker token of at least 32 characters}
+      PURETV_GO_OFFLINE_DOWNLOADS: ${PURETV_GO_OFFLINE_DOWNLOADS:-false}
+      PURETV_GO_OPENLIST_SCAN: ${PURETV_GO_OPENLIST_SCAN:-true}
+      PURETV_GO_LOCAL_FILES: ${PURETV_GO_LOCAL_FILES:-false}
+      PURETV_GO_LIVE: ${PURETV_GO_LIVE:-false}
+      PURETV_GO_NETDISK_CHECK: ${PURETV_GO_NETDISK_CHECK:-false}
+      PURETV_GO_SEARCH: ${PURETV_GO_SEARCH:-false}
+      PURETV_GO_SUBSCRIPTIONS: ${PURETV_GO_SUBSCRIPTIONS:-false}
+      PURETV_GO_ANIME_DOWNLOADS: ${PURETV_GO_ANIME_DOWNLOADS:-false}
+      PURETV_GO_DANMAKU: ${PURETV_GO_DANMAKU:-false}
+      PURETV_GO_METADATA: ${PURETV_GO_METADATA:-false}
+      PURETV_GO_TASKS: ${PURETV_GO_TASKS:-false}
+    depends_on:
+      puretv-go:
+        condition: service_healthy
+
+  puretv-go:
+    depends_on:
+      puretv-go-state-init:
+        condition: service_completed_successfully
+    build:
+      context: ./services/go-worker
+    image: puretv-go-worker:local
+    restart: unless-stopped
+    init: true
+    user: '${PUID:-1001}:${PGID:-1001}'
+    environment:
+      PURETV_GO_TOKEN: ${PURETV_GO_TOKEN:?Set an independent worker token of at least 32 characters}
+      PURETV_GO_LISTEN_ADDR: 0.0.0.0:8081
+      PURETV_GO_OFFLINE_DOWNLOADS: ${PURETV_GO_OFFLINE_DOWNLOADS:-false}
+      PURETV_GO_LOCAL_FILES: ${PURETV_GO_LOCAL_FILES:-false}
+      PURETV_GO_NETDISK_CHECK: ${PURETV_GO_NETDISK_CHECK:-false}
+      PURETV_GO_TASKS: ${PURETV_GO_TASKS:-false}
+      PURETV_GO_STATE_DIR: /state
+      PURETV_GO_ANIME_DOWNLOADS: ${PURETV_GO_ANIME_DOWNLOADS:-false}
+      PURETV_GO_ALLOWED_ORIGINS: ${PURETV_GO_ALLOWED_ORIGINS:-[]}
+      PURETV_GO_MAX_DOWNLOADS: ${PURETV_GO_MAX_DOWNLOADS:-2}
+      PURETV_GO_SEGMENT_CONCURRENCY: ${PURETV_GO_SEGMENT_CONCURRENCY:-6}
+      PURETV_GO_SCAN_CONCURRENCY: ${PURETV_GO_SCAN_CONCURRENCY:-4}
+      OFFLINE_DOWNLOAD_DIR: /data
+      OFFLINE_DOWNLOAD_PROXY: ${OFFLINE_DOWNLOAD_PROXY:-}
+      TZ: Asia/Shanghai
+    volumes:
+      - downloads:/data
+      - go-worker-state:/state
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    stop_grace_period: 30s
+
+  # Initialize only this worker's state volume for the configured runtime IDs.
+  # The service shares the worker image built above and exits before it starts.
+  puretv-go-state-init:
+    image: puretv-go-worker:local
+    pull_policy: never
+    user: '0:0'
+    restart: 'no'
+    entrypoint: ['/bin/sh', '-ec']
+    command:
+      - |
+        case "$$PUID" in ''|*[!0-9]*) exit 1;; esac
+        case "$$PGID" in ''|*[!0-9]*) exit 1;; esac
+        chown -R "$$PUID:$$PGID" /state
+    environment:
+      PUID: '${PUID:-1001}'
+      PGID: '${PGID:-1001}'
+    volumes:
+      - go-worker-state:/state
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+
+volumes:
+  go-worker-state:

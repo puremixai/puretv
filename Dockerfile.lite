@@ -1,0 +1,69 @@
+# ---- 第 1 阶段：安装依赖 ----
+FROM node:24-alpine AS deps
+
+RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+RUN pnpm install --frozen-lockfile
+
+# ---- 第 2 阶段：构建项目 ----
+FROM node:24-alpine AS builder
+RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+ENV DOCKER_ENV=true
+ENV PURETV_LITE=true
+ENV WATCH_ROOM_ENABLED=false
+ENV WATCH_ROOM_SERVER_TYPE=external
+ENV OFFLINE_DOWNLOAD_DIR=/data
+
+RUN pnpm run build
+
+# ---- 第 3 阶段：生成 lite 运行时镜像 ----
+FROM node:24-alpine AS runner
+
+# 安装 su-exec，用于在 entrypoint 中降权运行
+RUN apk add --no-cache su-exec
+
+RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S nextjs -G nodejs
+
+# 复制 entrypoint（支持通过 PUID/PGID 环境变量指定运行 UID/GID）
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+WORKDIR /app
+ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+ENV DOCKER_ENV=true
+ENV PURETV_LITE=true
+ENV WATCH_ROOM_ENABLED=false
+ENV WATCH_ROOM_SERVER_TYPE=external
+ENV OFFLINE_DOWNLOAD_DIR=/data
+
+# standalone 输出自带运行所需的最小服务端依赖
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=nextjs:nodejs /app/server ./server
+COPY --from=builder --chown=nextjs:nodejs /app/start.js ./start.js
+# 保持与完整镜像一致：如果运行时 server.js 引用了电视遥控 hub，确保该模块存在。
+COPY --from=builder --chown=nextjs:nodejs /app/src/lib/tv-remote-hub.js ./src/lib/tv-remote-hub.js
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# 准备默认离线下载目录
+RUN mkdir -p "$OFFLINE_DOWNLOAD_DIR" && chown -R nextjs:nodejs "$OFFLINE_DOWNLOAD_DIR"
+
+# 默认以 root 启动，由 entrypoint 按 PUID/PGID 环境变量调整后降权运行
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 CMD ["node", "scripts/healthcheck.cjs"]
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["node", "start.js"]

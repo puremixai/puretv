@@ -1,0 +1,45 @@
+// 此文件由 scripts/convert-changelog.js 自动生成
+// 请勿手动编辑
+
+export interface ChangelogEntry {
+  version: string;
+  date: string;
+  added: string[];
+  changed: string[];
+  fixed: string[];
+}
+
+export const changelog: ChangelogEntry[] = [
+  {
+    "version": "0.1.0-alpha.1",
+    "date": "2026-09-14",
+    "added": [
+      "新增独立 Go 服务端，可选接管服务器离线下载与 OpenList 根目录列举，保留原 API、鉴权、匹配与数据存储入口；提供默认关闭的适配开关、独立 Compose、回退说明及跨语言回归测试。",
+      "增加按文件和规则约束的 ESLint 警告基线，以及 API 访问策略清单与代理路由安全回归。",
+      "完整与 Lite Docker 镜像内置健康检查，复用 Compose 的服务就绪判断。",
+      "启用 0.1.0-alpha.N 早期测试序列，后续按 beta、rc 和阶段版本推进，1.0.0 保留给稳定版本。",
+      "归档独立版本启用前的上游更新历史，保留功能与版本追溯入口。",
+      "首页与详情加入海报渐显、缓慢缩放、滚动视差及暂停控制。",
+      "增加 PostgreSQL 业务存储、Redis 搜索缓存和迁移、备份与验证流程。"
+    ],
+    "changed": [
+      "IPTV 直播默认直连上游，统一网页、TV 页面及管理后台的模式选择；保留按源启用的 HLS 播放列表代理和全量代理，不自动回退代理。",
+      "播放记录、收藏与用户设置逐步收敛到共享 SQL 仓储，补齐数据库门面类型。",
+      "提取播放进度保存与切集、换源协调逻辑，src/lib 与 API 路由日志统一接入脱敏 logger（日志实现与第三方 vendor 除外）。",
+      "升级 Jest / jsdom 至 30，移除未使用的 Vidstack 与 media-icons 依赖，CI 使用 Node.js 24。",
+      "升级至 Next.js 16、React 19 和 Tailwind CSS 4，并调整前端加载与轮播交互。",
+      "README 按公开项目组织，部署、配置及开发说明分别维护；Docker 使用当前源码构建。",
+      "Android TV 默认版本名跟随仓库版本，保留显式覆盖和独立递增的安装版本号。"
+    ],
+    "fixed": [
+      "修正图片及旧直播代理的出站访问边界，限制未授权访问、私网目标和重定向，保留管理员配置的受信任来源。",
+      "统一 SQL 后端用户设置的原子版本比较、错误传播与批量操作回滚。",
+      "修正相同秒数不同集数的进度去重，以及快速换源时旧异步响应覆盖新选择的问题。",
+      "统一 package.json、VERSION.txt、生成的版本文件和更新记录中的 PureTV 版本号。",
+      "修正版本面板与更新检查的仓库来源，避免将上游版本识别为 PureTV 更新。",
+      "版本生成和更新检查支持预发布标识，并正确比较开发序号与阶段版本。"
+    ]
+  }
+];
+
+export default changelog;

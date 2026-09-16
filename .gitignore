@@ -1,0 +1,78 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+.next
+/.next/
+/.next-dev/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+.env
+.env*.local
+
+# vercel
+.vercel
+
+# cloudflare
+.open-next/
+
+# edgeone
+.edgeone/
+.wrangler/
+wrangler.toml.bak
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# next-sitemap
+sitemap.xml
+sitemap-*.xml
+
+# generated files
+src/lib/runtime.ts
+public/manifest.json
+
+# PWA files
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
+
+/.claude
+/.codex
+/.vscode
+# SQLite 开发数据库
+.data/
+*.db
+*.db-shm
+*.db-wal
+*.dump
+
+# local scripts
+scripts/tvbox/
+scripts/test
+
+.agents/
+skills-lock.json

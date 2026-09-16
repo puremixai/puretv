@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: puretv
+    runtime: docker
+    plan: free
+    repo: https://github.com/puremixai/puretv
+    branch: main
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: USERNAME
+        sync: false
+      - key: PASSWORD
+        sync: false
+      - key: NEXT_PUBLIC_SITE_NAME
+        value: PureTV
+      - key: CRON_PASSWORD
+        sync: false

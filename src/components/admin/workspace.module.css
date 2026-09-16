@@ -1,0 +1,54 @@
+.workspace {
+  color-scheme: light;
+}
+:global(.dark) .workspace {
+  color-scheme: dark;
+}
+.workspace :where(button, a, input, select, textarea, summary):focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 3px;
+}
+.workspace :where(input, select, textarea) {
+  max-width: 100%;
+}
+.workspace :where(button) {
+  touch-action: manipulation;
+}
+.workspace :where(dialog) {
+  z-index: 100;
+}
+.workspace :global(.admin-panel) {
+  min-width: 0;
+}
+.workspace :global(.admin-panel) > div {
+  min-width: 0;
+}
+.workspace :global(.admin-savebar) {
+  position: sticky;
+  bottom: 0;
+  z-index: 15;
+  margin-top: 24px;
+  border-top: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.98);
+  padding: 16px 0 max(16px, env(safe-area-inset-bottom));
+}
+:global(.dark) .workspace :global(.admin-savebar) {
+  border-color: #334155;
+  background: rgba(17, 24, 36, 0.98);
+}
+.workspace :global(.admin-panel) table {
+  font-size: 13px;
+}
+.workspace :global(.admin-panel) th {
+  white-space: nowrap;
+}
+@media (max-width: 639px) {
+  .workspace
+    :global(.admin-panel)
+    :where(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+    font-size: 16px;
+  }
+  .workspace :global(.admin-panel) button {
+    min-height: 36px;
+  }
+}

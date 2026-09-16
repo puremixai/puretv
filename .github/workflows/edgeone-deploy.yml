@@ -1,0 +1,247 @@
+name: Deploy to EdgeOne
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_name:
+        description: 'EdgeOne Pages 项目名'
+        required: false
+        default: 'puretv'
+        type: string
+      area:
+        description: '部署区域：overseas = 全球可用区（不含中国大陆），global = 全球可用区'
+        required: false
+        default: 'overseas'
+        type: choice
+        options:
+          - overseas
+          - global
+      sync_environment:
+        description: '部署后同步 GitHub Secrets 到 EdgeOne 环境变量，并再次部署使其生效'
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to EdgeOne Pages
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Export build environment variables
+        env:
+          NEXT_PUBLIC_STORAGE_TYPE: ${{ secrets.NEXT_PUBLIC_STORAGE_TYPE }}
+          NEXT_PUBLIC_SITE_NAME: ${{ secrets.NEXT_PUBLIC_SITE_NAME }}
+          NEXT_PUBLIC_SEARCH_MAX_PAGE: ${{ secrets.NEXT_PUBLIC_SEARCH_MAX_PAGE }}
+          NEXT_PUBLIC_DOUBAN_PROXY_TYPE: ${{ secrets.NEXT_PUBLIC_DOUBAN_PROXY_TYPE }}
+          NEXT_PUBLIC_DOUBAN_PROXY: ${{ secrets.NEXT_PUBLIC_DOUBAN_PROXY }}
+          NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE: ${{ secrets.NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE }}
+          NEXT_PUBLIC_DOUBAN_IMAGE_PROXY: ${{ secrets.NEXT_PUBLIC_DOUBAN_IMAGE_PROXY }}
+          NEXT_PUBLIC_DISABLE_YELLOW_FILTER: ${{ secrets.NEXT_PUBLIC_DISABLE_YELLOW_FILTER }}
+          NEXT_PUBLIC_FLUID_SEARCH: ${{ secrets.NEXT_PUBLIC_FLUID_SEARCH }}
+          NEXT_PUBLIC_PROXY_M3U8_TOKEN: ${{ secrets.NEXT_PUBLIC_PROXY_M3U8_TOKEN }}
+          NEXT_PUBLIC_DANMAKU_CACHE_EXPIRE_MINUTES: ${{ secrets.NEXT_PUBLIC_DANMAKU_CACHE_EXPIRE_MINUTES }}
+          NEXT_PUBLIC_VOICE_CHAT_STRATEGY: ${{ secrets.NEXT_PUBLIC_VOICE_CHAT_STRATEGY }}
+          NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD: ${{ secrets.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD }}
+          NEXT_PUBLIC_ENABLE_SOURCE_SEARCH: ${{ secrets.NEXT_PUBLIC_ENABLE_SOURCE_SEARCH }}
+          NEXT_PUBLIC_IMAGE_PROXY: ${{ secrets.NEXT_PUBLIC_IMAGE_PROXY }}
+          NEXT_PUBLIC_IMAGE_PROXY_PREFIX: ${{ secrets.NEXT_PUBLIC_IMAGE_PROXY_PREFIX }}
+          NEXT_PUBLIC_STORAGE_PREFIX: ${{ secrets.NEXT_PUBLIC_STORAGE_PREFIX }}
+          NEXT_PUBLIC_ENABLE_STREAM_PROXY: ${{ secrets.NEXT_PUBLIC_ENABLE_STREAM_PROXY }}
+          NEXT_PUBLIC_STREAM_PROXY_URL: ${{ secrets.NEXT_PUBLIC_STREAM_PROXY_URL }}
+          NEXT_PUBLIC_ENABLE_TURNSTILE: ${{ secrets.NEXT_PUBLIC_ENABLE_TURNSTILE }}
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+          NEXT_PUBLIC_THEME: ${{ secrets.NEXT_PUBLIC_THEME }}
+          NEXT_PUBLIC_THEME_COLOR: ${{ secrets.NEXT_PUBLIC_THEME_COLOR }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+          NEXT_PUBLIC_BASE_PATH: ${{ secrets.NEXT_PUBLIC_BASE_PATH }}
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          UPSTASH_URL: ${{ secrets.UPSTASH_URL }}
+          UPSTASH_TOKEN: ${{ secrets.UPSTASH_TOKEN }}
+          TURSO_URL: ${{ secrets.TURSO_URL }}
+          TURSO_TOKEN: ${{ secrets.TURSO_TOKEN }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          TMDB_IMAGE_DOMAIN: ${{ secrets.TMDB_IMAGE_DOMAIN }}
+          TMDB_PROXY: ${{ secrets.TMDB_PROXY }}
+          TMDB_REVERSE_PROXY: ${{ secrets.TMDB_REVERSE_PROXY }}
+          DANMAKU_API_BASE: ${{ secrets.DANMAKU_API_BASE }}
+          DANMAKU_API_TOKEN: ${{ secrets.DANMAKU_API_TOKEN }}
+          ANNOUNCEMENT: ${{ secrets.ANNOUNCEMENT }}
+          CRON_PASSWORD: ${{ secrets.CRON_PASSWORD }}
+          SITE_BASE: ${{ secrets.SITE_BASE }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          KVROCKS_URL: ${{ secrets.KVROCKS_URL }}
+          INIT_CONFIG: ${{ secrets.INIT_CONFIG }}
+          CONFIG_SUBSCRIPTION_URL: ${{ secrets.CONFIG_SUBSCRIPTION_URL }}
+          ENABLE_REGISTER: ${{ secrets.ENABLE_REGISTER }}
+          ENABLE_TVBOX_SUBSCRIBE: ${{ secrets.ENABLE_TVBOX_SUBSCRIBE }}
+          TVBOX_SUBSCRIBE_PATH: ${{ secrets.TVBOX_SUBSCRIBE_PATH }}
+          TVBOX_SUBSCRIBE_TOKEN: ${{ secrets.TVBOX_SUBSCRIBE_TOKEN }}
+          WATCH_ROOM_ENABLED: ${{ secrets.WATCH_ROOM_ENABLED }}
+          WATCH_ROOM_WS_URL: ${{ secrets.WATCH_ROOM_WS_URL }}
+          WATCH_ROOM_SERVER_URL: ${{ secrets.WATCH_ROOM_SERVER_URL }}
+          WATCH_ROOM_EXTERNAL_SERVER_AUTH: ${{ secrets.WATCH_ROOM_EXTERNAL_SERVER_AUTH }}
+          WATCH_ROOM_EXTERNAL_SERVER_URL: ${{ secrets.WATCH_ROOM_EXTERNAL_SERVER_URL }}
+          WATCH_ROOM_SERVER_TYPE: ${{ secrets.WATCH_ROOM_SERVER_TYPE }}
+          WEBSOCKET_SECRET: ${{ secrets.WEBSOCKET_SECRET }}
+          WEB_PUSH_EMAIL: ${{ secrets.WEB_PUSH_EMAIL }}
+          WEB_PUSH_PRIVATE_KEY: ${{ secrets.WEB_PUSH_PRIVATE_KEY }}
+          WEB_PUSH_PUBLIC_KEY: ${{ secrets.WEB_PUSH_PUBLIC_KEY }}
+          WEB_PUSH_BASEURL: ${{ secrets.WEB_PUSH_BASEURL }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+        run: |
+          append_env() {
+            local key="$1"
+            local value="${!key-}"
+            if [ -n "$value" ]; then
+              {
+                echo "$key<<__EDGEONE_ENV_$key__"
+                echo "$value"
+                echo "__EDGEONE_ENV_$key__"
+              } >> "$GITHUB_ENV"
+            fi
+          }
+
+          keys=(
+            NEXT_PUBLIC_STORAGE_TYPE NEXT_PUBLIC_SITE_NAME NEXT_PUBLIC_SEARCH_MAX_PAGE
+            NEXT_PUBLIC_DOUBAN_PROXY_TYPE NEXT_PUBLIC_DOUBAN_PROXY
+            NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE NEXT_PUBLIC_DOUBAN_IMAGE_PROXY
+            NEXT_PUBLIC_DISABLE_YELLOW_FILTER NEXT_PUBLIC_FLUID_SEARCH
+            NEXT_PUBLIC_PROXY_M3U8_TOKEN NEXT_PUBLIC_DANMAKU_CACHE_EXPIRE_MINUTES
+            NEXT_PUBLIC_VOICE_CHAT_STRATEGY NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD
+            NEXT_PUBLIC_ENABLE_SOURCE_SEARCH NEXT_PUBLIC_IMAGE_PROXY NEXT_PUBLIC_IMAGE_PROXY_PREFIX
+            NEXT_PUBLIC_STORAGE_PREFIX NEXT_PUBLIC_ENABLE_STREAM_PROXY NEXT_PUBLIC_STREAM_PROXY_URL
+            NEXT_PUBLIC_ENABLE_TURNSTILE NEXT_PUBLIC_TURNSTILE_SITE_KEY
+            NEXT_PUBLIC_THEME NEXT_PUBLIC_THEME_COLOR NEXT_PUBLIC_APP_URL NEXT_PUBLIC_BASE_PATH
+            USERNAME PASSWORD UPSTASH_URL UPSTASH_TOKEN TURSO_URL TURSO_TOKEN
+            TMDB_API_KEY TMDB_IMAGE_DOMAIN TMDB_PROXY TMDB_REVERSE_PROXY
+            DANMAKU_API_BASE DANMAKU_API_TOKEN ANNOUNCEMENT CRON_PASSWORD SITE_BASE
+            REDIS_URL KVROCKS_URL INIT_CONFIG CONFIG_SUBSCRIPTION_URL ENABLE_REGISTER
+            ENABLE_TVBOX_SUBSCRIBE TVBOX_SUBSCRIBE_PATH TVBOX_SUBSCRIBE_TOKEN
+            WATCH_ROOM_ENABLED WATCH_ROOM_WS_URL WATCH_ROOM_SERVER_URL
+            WATCH_ROOM_EXTERNAL_SERVER_AUTH WATCH_ROOM_EXTERNAL_SERVER_URL WATCH_ROOM_SERVER_TYPE
+            WEBSOCKET_SECRET WEB_PUSH_EMAIL WEB_PUSH_PRIVATE_KEY WEB_PUSH_PUBLIC_KEY WEB_PUSH_BASEURL
+            TURNSTILE_SECRET_KEY
+          )
+
+          for key in "${keys[@]}"; do
+            append_env "$key"
+          done
+
+          echo "BUILD_TARGET=edgeone" >> "$GITHUB_ENV"
+          echo "EDGEONE_PAGES=1" >> "$GITHUB_ENV"
+          echo "NODE_ENV=production" >> "$GITHUB_ENV"
+
+      - name: Build for EdgeOne
+        run: pnpm run build:edgeone
+
+      - name: Deploy to EdgeOne
+        id: deploy
+        env:
+          EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
+          EDGEONE_PROJECT_NAME: ${{ inputs.project_name }}
+          EDGEONE_AREA: ${{ inputs.area }}
+        run: |
+          if [ -z "$EDGEONE_API_TOKEN" ]; then
+            echo "EDGEONE_API_TOKEN secret is required" >&2
+            exit 1
+          fi
+
+          pnpm exec edgeone makers deploy .edgeone \
+            -n "$EDGEONE_PROJECT_NAME" \
+            -t "$EDGEONE_API_TOKEN" \
+            -a "$EDGEONE_AREA" | tee edgeone-deploy.log
+
+          deploy_url=$(grep '^EDGEONE_DEPLOY_URL=' edgeone-deploy.log | tail -n 1 | cut -d= -f2-)
+          project_id=$(grep '^EDGEONE_PROJECT_ID=' edgeone-deploy.log | tail -n 1 | cut -d= -f2-)
+          echo "deploy_url=$deploy_url" >> "$GITHUB_OUTPUT"
+          echo "project_id=$project_id" >> "$GITHUB_OUTPUT"
+
+      - name: Sync EdgeOne environment variables
+        if: ${{ inputs.sync_environment }}
+        env:
+          EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
+        run: |
+          keys=(
+            NEXT_PUBLIC_STORAGE_TYPE NEXT_PUBLIC_SITE_NAME NEXT_PUBLIC_SEARCH_MAX_PAGE
+            NEXT_PUBLIC_DOUBAN_PROXY_TYPE NEXT_PUBLIC_DOUBAN_PROXY
+            NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE NEXT_PUBLIC_DOUBAN_IMAGE_PROXY
+            NEXT_PUBLIC_DISABLE_YELLOW_FILTER NEXT_PUBLIC_FLUID_SEARCH
+            NEXT_PUBLIC_PROXY_M3U8_TOKEN NEXT_PUBLIC_DANMAKU_CACHE_EXPIRE_MINUTES
+            NEXT_PUBLIC_VOICE_CHAT_STRATEGY NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD
+            NEXT_PUBLIC_ENABLE_SOURCE_SEARCH NEXT_PUBLIC_IMAGE_PROXY NEXT_PUBLIC_IMAGE_PROXY_PREFIX
+            NEXT_PUBLIC_STORAGE_PREFIX NEXT_PUBLIC_ENABLE_STREAM_PROXY NEXT_PUBLIC_STREAM_PROXY_URL
+            NEXT_PUBLIC_ENABLE_TURNSTILE NEXT_PUBLIC_TURNSTILE_SITE_KEY
+            NEXT_PUBLIC_THEME NEXT_PUBLIC_THEME_COLOR NEXT_PUBLIC_APP_URL NEXT_PUBLIC_BASE_PATH
+            USERNAME PASSWORD UPSTASH_URL UPSTASH_TOKEN TURSO_URL TURSO_TOKEN
+            TMDB_API_KEY TMDB_IMAGE_DOMAIN TMDB_PROXY TMDB_REVERSE_PROXY
+            DANMAKU_API_BASE DANMAKU_API_TOKEN ANNOUNCEMENT CRON_PASSWORD SITE_BASE
+            REDIS_URL KVROCKS_URL INIT_CONFIG CONFIG_SUBSCRIPTION_URL ENABLE_REGISTER
+            ENABLE_TVBOX_SUBSCRIBE TVBOX_SUBSCRIBE_PATH TVBOX_SUBSCRIBE_TOKEN
+            WATCH_ROOM_ENABLED WATCH_ROOM_WS_URL WATCH_ROOM_SERVER_URL
+            WATCH_ROOM_EXTERNAL_SERVER_AUTH WATCH_ROOM_EXTERNAL_SERVER_URL WATCH_ROOM_SERVER_TYPE
+            WEBSOCKET_SECRET WEB_PUSH_EMAIL WEB_PUSH_PRIVATE_KEY WEB_PUSH_PUBLIC_KEY WEB_PUSH_BASEURL
+            TURNSTILE_SECRET_KEY
+          )
+
+          for key in "${keys[@]}"; do
+            value="${!key-}"
+            if [ -n "$value" ]; then
+              echo "Syncing $key"
+              pnpm exec edgeone makers env set "$key" "$value" -t "$EDGEONE_API_TOKEN"
+            fi
+          done
+
+      - name: Redeploy after environment sync
+        if: ${{ inputs.sync_environment }}
+        id: redeploy
+        env:
+          EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
+          EDGEONE_PROJECT_NAME: ${{ inputs.project_name }}
+          EDGEONE_AREA: ${{ inputs.area }}
+        run: |
+          pnpm exec edgeone makers deploy .edgeone \
+            -n "$EDGEONE_PROJECT_NAME" \
+            -t "$EDGEONE_API_TOKEN" \
+            -a "$EDGEONE_AREA" | tee edgeone-redeploy.log
+
+          deploy_url=$(grep '^EDGEONE_DEPLOY_URL=' edgeone-redeploy.log | tail -n 1 | cut -d= -f2-)
+          project_id=$(grep '^EDGEONE_PROJECT_ID=' edgeone-redeploy.log | tail -n 1 | cut -d= -f2-)
+          echo "deploy_url=$deploy_url" >> "$GITHUB_OUTPUT"
+          echo "project_id=$project_id" >> "$GITHUB_OUTPUT"
+
+      - name: Deployment summary
+        run: |
+          final_url="${{ steps.redeploy.outputs.deploy_url || steps.deploy.outputs.deploy_url }}"
+          project_id="${{ steps.redeploy.outputs.project_id || steps.deploy.outputs.project_id }}"
+          {
+            echo "## EdgeOne deployment"
+            echo
+            echo "- Project ID: $project_id"
+            echo "- Deploy URL: $final_url"
+            echo "- Area: ${{ inputs.area }}"
+          } >> "$GITHUB_STEP_SUMMARY"

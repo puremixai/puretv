@@ -1,0 +1,188 @@
+name: Deploy to Cloudflare
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Cloudflare Pages
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set environment variables
+        run: |
+          echo "BUILD_TARGET=cloudflare" >> $GITHUB_ENV
+          echo "NODE_ENV=production" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_STORAGE_TYPE=${{ secrets.NEXT_PUBLIC_STORAGE_TYPE }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SITE_NAME=${{ secrets.NEXT_PUBLIC_SITE_NAME }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SEARCH_MAX_PAGE=${{ secrets.NEXT_PUBLIC_SEARCH_MAX_PAGE }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_DOUBAN_PROXY_TYPE=${{ secrets.NEXT_PUBLIC_DOUBAN_PROXY_TYPE }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_DOUBAN_PROXY=${{ secrets.NEXT_PUBLIC_DOUBAN_PROXY }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE=${{ secrets.NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_DOUBAN_IMAGE_PROXY=${{ secrets.NEXT_PUBLIC_DOUBAN_IMAGE_PROXY }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_DISABLE_YELLOW_FILTER=${{ secrets.NEXT_PUBLIC_DISABLE_YELLOW_FILTER }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_FLUID_SEARCH=${{ secrets.NEXT_PUBLIC_FLUID_SEARCH }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_PROXY_M3U8_TOKEN=${{ secrets.NEXT_PUBLIC_PROXY_M3U8_TOKEN }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_DANMAKU_CACHE_EXPIRE_MINUTES=${{ secrets.NEXT_PUBLIC_DANMAKU_CACHE_EXPIRE_MINUTES }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_VOICE_CHAT_STRATEGY=${{ secrets.NEXT_PUBLIC_VOICE_CHAT_STRATEGY }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD=${{ secrets.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_ENABLE_SOURCE_SEARCH=${{ secrets.NEXT_PUBLIC_ENABLE_SOURCE_SEARCH }}" >> $GITHUB_ENV
+          echo "USERNAME=${{ secrets.USERNAME }}" >> $GITHUB_ENV
+          echo "PASSWORD=${{ secrets.PASSWORD }}" >> $GITHUB_ENV
+          echo "UPSTASH_URL=${{ secrets.UPSTASH_URL }}" >> $GITHUB_ENV
+          echo "UPSTASH_TOKEN=${{ secrets.UPSTASH_TOKEN }}" >> $GITHUB_ENV
+          echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> $GITHUB_ENV
+          echo "TMDB_PROXY=${{ secrets.TMDB_PROXY }}" >> $GITHUB_ENV
+          echo "TMDB_REVERSE_PROXY=${{ secrets.TMDB_REVERSE_PROXY }}" >> $GITHUB_ENV
+          echo "DANMAKU_API_BASE=${{ secrets.DANMAKU_API_BASE }}" >> $GITHUB_ENV
+          echo "DANMAKU_API_TOKEN=${{ secrets.DANMAKU_API_TOKEN }}" >> $GITHUB_ENV
+          echo "ANNOUNCEMENT=${{ secrets.ANNOUNCEMENT }}" >> $GITHUB_ENV
+          echo "CRON_PASSWORD=${{ secrets.CRON_PASSWORD }}" >> $GITHUB_ENV
+          echo "SITE_BASE=${{ secrets.SITE_BASE }}" >> $GITHUB_ENV
+          echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> $GITHUB_ENV
+          echo "KVROCKS_URL=${{ secrets.KVROCKS_URL }}" >> $GITHUB_ENV
+          echo "INIT_CONFIG=${{ secrets.INIT_CONFIG }}" >> $GITHUB_ENV
+          echo "CONFIG_SUBSCRIPTION_URL=${{ secrets.CONFIG_SUBSCRIPTION_URL }}" >> $GITHUB_ENV
+          echo "ENABLE_TVBOX_SUBSCRIBE=${{ secrets.ENABLE_TVBOX_SUBSCRIBE }}" >> $GITHUB_ENV
+          echo "TVBOX_SUBSCRIBE_TOKEN=${{ secrets.TVBOX_SUBSCRIBE_TOKEN }}" >> $GITHUB_ENV
+          echo "WATCH_ROOM_ENABLED=${{ secrets.WATCH_ROOM_ENABLED }}" >> $GITHUB_ENV
+          echo "WATCH_ROOM_EXTERNAL_SERVER_AUTH=${{ secrets.WATCH_ROOM_EXTERNAL_SERVER_AUTH }}" >> $GITHUB_ENV
+          echo "WATCH_ROOM_EXTERNAL_SERVER_URL=${{ secrets.WATCH_ROOM_EXTERNAL_SERVER_URL }}" >> $GITHUB_ENV
+          echo "WATCH_ROOM_SERVER_TYPE=${{ secrets.WATCH_ROOM_SERVER_TYPE }}" >> $GITHUB_ENV
+
+      - name: Configure D1 Database in wrangler.toml
+        run: |
+          STORAGE_TYPE="${{ secrets.NEXT_PUBLIC_STORAGE_TYPE }}"
+
+          if [ "$STORAGE_TYPE" != "d1" ]; then
+            echo "Storage type is not d1 (current: $STORAGE_TYPE), removing D1 database configuration"
+            # Remove the entire [[d1_databases]] section including the comment
+            sed -i '/^# D1 数据库绑定$/,/^database_id = .*$/d' wrangler.toml
+            # Also remove any remaining [[d1_databases]] block
+            sed -i '/^\[\[d1_databases\]\]$/,/^$/{ /^\[\[d1_databases\]\]$/d; /^binding = /d; /^database_name = /d; /^database_id = /d; }' wrangler.toml
+            echo "D1 configuration removed from wrangler.toml"
+          elif [ -n "${{ secrets.D1_DATABASE_ID }}" ]; then
+            sed -i 's/REPLACE_WITH_YOUR_D1_DATABASE_ID/${{ secrets.D1_DATABASE_ID }}/g' wrangler.toml
+            echo "D1 Database ID replaced successfully"
+          else
+            echo "⚠️ Storage type is d1 but D1_DATABASE_ID secret not set"
+            exit 1
+          fi
+
+      - name: Update wrangler.toml with environment variables
+        run: |
+          # Function to append variable to wrangler.toml if it has a value
+          append_var() {
+            local var_name=$1
+            local var_value=$2
+            if [ -n "$var_value" ]; then
+              echo "$var_name = \"$var_value\"" >> wrangler.toml
+            fi
+          }
+
+          # Append all environment variables to wrangler.toml
+          append_var "NEXT_PUBLIC_STORAGE_TYPE" "${{ secrets.NEXT_PUBLIC_STORAGE_TYPE }}"
+          append_var "NEXT_PUBLIC_SITE_NAME" "${{ secrets.NEXT_PUBLIC_SITE_NAME }}"
+          append_var "NEXT_PUBLIC_SEARCH_MAX_PAGE" "${{ secrets.NEXT_PUBLIC_SEARCH_MAX_PAGE }}"
+          append_var "NEXT_PUBLIC_DOUBAN_PROXY_TYPE" "${{ secrets.NEXT_PUBLIC_DOUBAN_PROXY_TYPE }}"
+          append_var "NEXT_PUBLIC_DOUBAN_PROXY" "${{ secrets.NEXT_PUBLIC_DOUBAN_PROXY }}"
+          append_var "NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE" "${{ secrets.NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE }}"
+          append_var "NEXT_PUBLIC_DOUBAN_IMAGE_PROXY" "${{ secrets.NEXT_PUBLIC_DOUBAN_IMAGE_PROXY }}"
+          append_var "NEXT_PUBLIC_DISABLE_YELLOW_FILTER" "${{ secrets.NEXT_PUBLIC_DISABLE_YELLOW_FILTER }}"
+          append_var "NEXT_PUBLIC_FLUID_SEARCH" "${{ secrets.NEXT_PUBLIC_FLUID_SEARCH }}"
+          append_var "NEXT_PUBLIC_PROXY_M3U8_TOKEN" "${{ secrets.NEXT_PUBLIC_PROXY_M3U8_TOKEN }}"
+          append_var "NEXT_PUBLIC_DANMAKU_CACHE_EXPIRE_MINUTES" "${{ secrets.NEXT_PUBLIC_DANMAKU_CACHE_EXPIRE_MINUTES }}"
+          append_var "NEXT_PUBLIC_VOICE_CHAT_STRATEGY" "${{ secrets.NEXT_PUBLIC_VOICE_CHAT_STRATEGY }}"
+          append_var "NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD" "${{ secrets.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD }}"
+          append_var "NEXT_PUBLIC_ENABLE_SOURCE_SEARCH" "${{ secrets.NEXT_PUBLIC_ENABLE_SOURCE_SEARCH }}"
+          append_var "USERNAME" "${{ secrets.USERNAME }}"
+          append_var "PASSWORD" "${{ secrets.PASSWORD }}"
+          append_var "UPSTASH_URL" "${{ secrets.UPSTASH_URL }}"
+          append_var "UPSTASH_TOKEN" "${{ secrets.UPSTASH_TOKEN }}"
+          append_var "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
+          append_var "TMDB_PROXY" "${{ secrets.TMDB_PROXY }}"
+          append_var "TMDB_REVERSE_PROXY" "${{ secrets.TMDB_REVERSE_PROXY }}"
+          append_var "DANMAKU_API_BASE" "${{ secrets.DANMAKU_API_BASE }}"
+          append_var "DANMAKU_API_TOKEN" "${{ secrets.DANMAKU_API_TOKEN }}"
+          append_var "ANNOUNCEMENT" "${{ secrets.ANNOUNCEMENT }}"
+          append_var "CRON_PASSWORD" "${{ secrets.CRON_PASSWORD }}"
+          append_var "SITE_BASE" "${{ secrets.SITE_BASE }}"
+          append_var "REDIS_URL" "${{ secrets.REDIS_URL }}"
+          append_var "KVROCKS_URL" "${{ secrets.KVROCKS_URL }}"
+          append_var "INIT_CONFIG" "${{ secrets.INIT_CONFIG }}"
+          append_var "CONFIG_SUBSCRIPTION_URL" "${{ secrets.CONFIG_SUBSCRIPTION_URL }}"
+          append_var ENABLE_TVBOX_SUBSCRIBE "${{ secrets.ENABLE_TVBOX_SUBSCRIBE }}"
+          append_var TVBOX_SUBSCRIBE_TOKEN "${{ secrets.TVBOX_SUBSCRIBE_TOKEN }}"
+          append_var WATCH_ROOM_ENABLED "${{ secrets.WATCH_ROOM_ENABLED }}"
+          append_var WATCH_ROOM_EXTERNAL_SERVER_AUTH "${{ secrets.WATCH_ROOM_EXTERNAL_SERVER_AUTH }}"
+          append_var WATCH_ROOM_EXTERNAL_SERVER_URL "${{ secrets.WATCH_ROOM_EXTERNAL_SERVER_URL }}"
+          append_var WATCH_ROOM_SERVER_TYPE "${{ secrets.WATCH_ROOM_SERVER_TYPE }}"
+          
+          echo "Updated wrangler.toml:"
+          cat wrangler.toml
+
+      - name: Build for Cloudflare
+        run: pnpm run build:cloudflare
+
+      - name: Install Wrangler
+        run: pnpm add -g wrangler@4.60.0
+
+      - name: Run D1 Database Migrations
+        run: |
+          STORAGE_TYPE="${{ secrets.NEXT_PUBLIC_STORAGE_TYPE }}"
+
+          if [ "$STORAGE_TYPE" != "d1" ]; then
+            echo "Storage type is not d1 (current: $STORAGE_TYPE), skipping D1 migrations"
+            exit 0
+          fi
+
+          if [ -z "${{ secrets.D1_DATABASE_ID }}" ]; then
+            echo "D1_DATABASE_ID not set, skipping migrations"
+            exit 0
+          fi
+
+          echo "Running D1 database migrations..."
+
+          for migration_file in ./migrations/*.sql; do
+            if [ -f "$migration_file" ]; then
+              echo "Executing migration: $(basename $migration_file)"
+              wrangler d1 execute puretv --remote --file="$migration_file" || echo "⚠️ Migration may have been skipped (already applied)"
+            fi
+          done
+
+          echo "✅ Migrations completed"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          packageManager: pnpm
+          wranglerVersion: "4.60.0"

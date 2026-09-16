@@ -1,0 +1,42 @@
+name: puretv-local
+
+services:
+  puretv:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: puretv:before-postgres-redis
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - .env.before-postgres.local
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+      NEXT_PUBLIC_STORAGE_TYPE: d1
+      SQLITE_DB_PATH: /app/.data/puretv.db
+      OFFLINE_DOWNLOAD_DIR: /data
+      WATCH_ROOM_ENABLED: "true"
+      WATCH_ROOM_SERVER_TYPE: internal
+      ENABLE_TV_MODE: "true"
+      ALLOW_SERVER_SCRIPTS: "false"
+      TZ: Asia/Shanghai
+    volumes:
+      - database:/app/.data
+      - downloads:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/auth/socket').then(r=>process.exit(r.status===401?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+volumes:
+  # Share the PureTV data volumes with the PostgreSQL deployment and rollback image.
+  database:
+    name: puretv-local_database
+  downloads:
+    name: puretv-local_downloads

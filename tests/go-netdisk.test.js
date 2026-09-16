@@ -1,0 +1,20 @@
+/** @jest-environment node */
+require('./web-globals');
+const { NextRequest, NextResponse } = require('next/server');
+jest.mock('../src/lib/permissions', () => ({ requireFeaturePermission: jest.fn() }));
+jest.mock('../src/lib/netdisk-check-task', () => ({ startNetdiskCheckTask: jest.fn(), getNetdiskCheckTask: jest.fn(), cancelNetdiskCheckTask: jest.fn(), getNetdiskCheckCooldownRemainingMs: jest.fn(() => 0), assertNetdiskCheckPlatform: jest.fn(x => x) }));
+const { requireFeaturePermission } = require('../src/lib/permissions');
+const fallback = require('../src/lib/netdisk-check-task');
+const start = require('../src/app/api/netdisk/check/start/route').POST;
+const task = require('../src/app/api/netdisk/check/task/route').GET;
+const cancel = require('../src/app/api/netdisk/check/cancel/route').POST;
+const originalFetch = global.fetch;
+beforeEach(() => { jest.clearAllMocks(); jest.replaceProperty(process, 'env', { NODE_ENV:'test', PURETV_GO_NETDISK_CHECK:'true', PURETV_GO_URL:'http://worker:8081', PURETV_GO_TOKEN:'s'.repeat(32) }); requireFeaturePermission.mockResolvedValue({username:'alice'}); global.fetch=jest.fn(async()=>Response.json({task:{id:'abc'}})); });
+afterEach(()=>{global.fetch=originalFetch;jest.restoreAllMocks();});
+const req = (action, body) => new NextRequest(`http://app/api/netdisk/check/${action}${action==='task'?'?id=abc&owner=attacker':''}`, { method:action==='task'?'GET':'POST', ...(action==='task'?{}:{body:JSON.stringify(body)}) });
+test.each([[start,'start'],[task,'task'],[cancel,'cancel']])('authorization before any delegation %s',async(handler,action)=>{requireFeaturePermission.mockResolvedValue(NextResponse.json({error:'denied'},{status:403}));expect((await handler(req(action,{}))).status).toBe(403);expect(global.fetch).not.toHaveBeenCalled();});
+test('authenticated owner replaces browser owner on start',async()=>{expect((await start(req('start',{owner:'attacker',platform:'aliyun',links:['https://alipan.com/s/a']}))).status).toBe(200);const [url,init]=global.fetch.mock.calls[0];expect(url).toBe('http://worker:8081/v1/netdisk/check/start');expect(JSON.parse(init.body).owner).toBe('alice');expect(init.headers.Authorization).toBe(`Bearer ${'s'.repeat(32)}`);expect(fallback.startNetdiskCheckTask).not.toHaveBeenCalled();});
+test.each([[task,'task'],[cancel,'cancel']])('owner forwarded on task access %s',async(handler,action)=>{await handler(req(action,{taskId:'abc',owner:'attacker'}));const [url,init]=global.fetch.mock.calls[0];if(action==='task'){expect(new URL(url).searchParams.get('owner')).toBe('alice')}else{expect(JSON.parse(init.body).owner).toBe('alice')}});
+test('timeout never duplicates submission or leaks errors',async()=>{global.fetch.mockRejectedValue(new Error('secret token URL'));const res=await start(req('start',{platform:'aliyun',links:['x']}));expect(res.status).toBe(503);expect(await res.text()).not.toContain('secret');expect(fallback.startNetdiskCheckTask).not.toHaveBeenCalled();});
+test('disabled retains original Node behavior',async()=>{process.env.PURETV_GO_NETDISK_CHECK='false';fallback.startNetdiskCheckTask.mockReturnValue({id:'node'});const res=await start(req('start',{platform:'aliyun',links:['x']}));expect((await res.json()).taskId).toBe('node');expect(global.fetch).not.toHaveBeenCalled();});
+test('oversize input rejected before worker',async()=>{const res=await start(req('start',{platform:'aliyun',links:['x'.repeat(513*1024)]}));expect(res.status).toBe(400);expect(global.fetch).not.toHaveBeenCalled();});

@@ -1,0 +1,27 @@
+name: 项目提问
+description: 对项目功能有疑问
+title: '[提问]'
+labels: ["question"]
+body:
+  - type: checkboxes
+    attributes:
+      label: 提问前确认
+      options:
+        - label: 我已仔细查阅文档，任无法解决
+          required: true
+        - label: 我已查询过无其他类似issue
+          required: true
+        - label: 我已尝试过多种方法，任无法解决，且收集了足够的材料
+          required: true
+        - label: 我提交的是疑问，而不是bug
+          required: true
+        - label: 上述并非随意勾选，我已明确随意勾选不会得到回应且有可能会被close
+          required: true         
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: 你想问什么?
+      placeholder: 输入你的问题...
+    validations:
+      required: true

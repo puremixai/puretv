@@ -1,0 +1,5 @@
+/.data/
+/bin/
+/*.exe
+/puretv-worker
+/coverage.out

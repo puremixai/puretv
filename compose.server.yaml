@@ -1,0 +1,34 @@
+# Use after compose.local.yaml and compose.go-worker.yaml.
+# Attach only the web application to an existing Nginx Docker network.
+name: puretv-server
+
+services:
+  puretv:
+    image: ${PURETV_IMAGE:-puretv:server}
+    ports: !reset []
+    networks:
+      default:
+      proxy:
+        aliases:
+          - puretv-web
+
+  puretv-go:
+    image: ${PURETV_GO_IMAGE:-puretv-go-worker:server}
+
+  puretv-go-state-init:
+    image: ${PURETV_GO_IMAGE:-puretv-go-worker:server}
+
+networks:
+  proxy:
+    external: true
+    name: ${PURETV_PROXY_NETWORK:?Set the existing reverse proxy Docker network}
+
+volumes:
+  database:
+    name: puretv-server_database
+  downloads:
+    name: puretv-server_downloads
+  postgres:
+    name: puretv-server_postgres
+  go-worker-state:
+    name: puretv-server_go-worker-state
