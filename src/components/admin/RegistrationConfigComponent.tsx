@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { AlertTriangle } from 'lucide-react';
@@ -8,7 +6,9 @@ import { createPortal } from 'react-dom';
 
 import { AdminConfig } from '@/lib/admin.types';
 import { adminFetch as fetch } from '@/lib/admin-fetch';
+import { getOIDCProviders, OIDCProviderConfig } from '@/lib/oidc';
 
+import { OIDCProvidersEditor } from '@/components/admin/OIDCProvidersEditor';
 import {
   AlertModal,
   buttonStyles,
@@ -38,16 +38,7 @@ export const RegistrationConfigComponent = ({
     TurnstileSiteKey: string;
     TurnstileSecretKey: string;
     DefaultUserTags: string[];
-    EnableOIDCLogin: boolean;
-    EnableOIDCRegistration: boolean;
-    OIDCIssuer: string;
-    OIDCAuthorizationEndpoint: string;
-    OIDCTokenEndpoint: string;
-    OIDCUserInfoEndpoint: string;
-    OIDCClientId: string;
-    OIDCClientSecret: string;
-    OIDCButtonText: string;
-    OIDCMinTrustLevel: number;
+    OIDCProviders: OIDCProviderConfig[];
   }>({
     EnableRegistration: false,
     RequireRegistrationInviteCode: false,
@@ -57,16 +48,7 @@ export const RegistrationConfigComponent = ({
     TurnstileSiteKey: '',
     TurnstileSecretKey: '',
     DefaultUserTags: [],
-    EnableOIDCLogin: false,
-    EnableOIDCRegistration: false,
-    OIDCIssuer: '',
-    OIDCAuthorizationEndpoint: '',
-    OIDCTokenEndpoint: '',
-    OIDCUserInfoEndpoint: '',
-    OIDCClientId: '',
-    OIDCClientSecret: '',
-    OIDCButtonText: '',
-    OIDCMinTrustLevel: 0,
+    OIDCProviders: [],
   });
 
   useEffect(() => {
@@ -82,18 +64,7 @@ export const RegistrationConfigComponent = ({
         TurnstileSiteKey: config.SiteConfig.TurnstileSiteKey || '',
         TurnstileSecretKey: config.SiteConfig.TurnstileSecretKey || '',
         DefaultUserTags: config.SiteConfig.DefaultUserTags || [],
-        EnableOIDCLogin: config.SiteConfig.EnableOIDCLogin || false,
-        EnableOIDCRegistration:
-          config.SiteConfig.EnableOIDCRegistration || false,
-        OIDCIssuer: config.SiteConfig.OIDCIssuer || '',
-        OIDCAuthorizationEndpoint:
-          config.SiteConfig.OIDCAuthorizationEndpoint || '',
-        OIDCTokenEndpoint: config.SiteConfig.OIDCTokenEndpoint || '',
-        OIDCUserInfoEndpoint: config.SiteConfig.OIDCUserInfoEndpoint || '',
-        OIDCClientId: config.SiteConfig.OIDCClientId || '',
-        OIDCClientSecret: config.SiteConfig.OIDCClientSecret || '',
-        OIDCButtonText: config.SiteConfig.OIDCButtonText || '',
-        OIDCMinTrustLevel: config.SiteConfig.OIDCMinTrustLevel ?? 0,
+        OIDCProviders: getOIDCProviders(config.SiteConfig),
       });
     }
   }, [config]);
@@ -469,356 +440,16 @@ export const RegistrationConfigComponent = ({
         <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
           OIDC配置
         </summary>
-        <div className='mt-4 space-y-4'>
-          {/* 启用OIDC登录 */}
-          <div>
-            <div className='flex items-center justify-between'>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                启用OIDC登录
-              </label>
-              <button
-                type='button'
-                onClick={() =>
-                  setRegistrationSettings((prev) => ({
-                    ...prev,
-                    EnableOIDCLogin: !prev.EnableOIDCLogin,
-                  }))
-                }
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                  registrationSettings.EnableOIDCLogin
-                    ? buttonStyles.toggleOn
-                    : buttonStyles.toggleOff
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full ${
-                    buttonStyles.toggleThumb
-                  } transition-transform ${
-                    registrationSettings.EnableOIDCLogin
-                      ? buttonStyles.toggleThumbOn
-                      : buttonStyles.toggleThumbOff
-                  }`}
-                />
-              </button>
-            </div>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              开启后登录页面将显示OIDC登录按钮
-            </p>
-          </div>
-
-          {/* 启用OIDC注册 */}
-          <div>
-            <div className='flex items-center justify-between'>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                启用OIDC注册
-              </label>
-              <button
-                type='button'
-                onClick={() =>
-                  setRegistrationSettings((prev) => ({
-                    ...prev,
-                    EnableOIDCRegistration: !prev.EnableOIDCRegistration,
-                  }))
-                }
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                  registrationSettings.EnableOIDCRegistration
-                    ? buttonStyles.toggleOn
-                    : buttonStyles.toggleOff
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full ${
-                    buttonStyles.toggleThumb
-                  } transition-transform ${
-                    registrationSettings.EnableOIDCRegistration
-                      ? buttonStyles.toggleThumbOn
-                      : buttonStyles.toggleThumbOff
-                  }`}
-                />
-              </button>
-            </div>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              开启后允许通过OIDC方式注册新用户（需要先启用OIDC登录）
-            </p>
-          </div>
-
-          {/* OIDC Issuer */}
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              OIDC Issuer URL（可选）
-            </label>
-            <div className='flex flex-col sm:flex-row gap-2'>
-              <input
-                type='text'
-                placeholder='https://your-oidc-provider.com/realms/your-realm'
-                value={registrationSettings.OIDCIssuer || ''}
-                onChange={(e) =>
-                  setRegistrationSettings((prev) => ({
-                    ...prev,
-                    OIDCIssuer: e.target.value,
-                  }))
-                }
-                className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
-              />
-              <button
-                type='button'
-                onClick={async () => {
-                  if (!registrationSettings.OIDCIssuer) {
-                    showError('请先输入Issuer URL', showAlert);
-                    return;
-                  }
-
-                  await withLoading('oidcDiscover', async () => {
-                    try {
-                      const res = await fetch('/api/admin/oidc-discover', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          issuerUrl: registrationSettings.OIDCIssuer,
-                        }),
-                      });
-
-                      if (!res.ok) {
-                        const data = await res.json().catch(() => ({}));
-                        throw new Error(data.error || '获取配置失败');
-                      }
-
-                      const data = await res.json();
-                      setRegistrationSettings((prev) => ({
-                        ...prev,
-                        OIDCAuthorizationEndpoint:
-                          data.authorization_endpoint || '',
-                        OIDCTokenEndpoint: data.token_endpoint || '',
-                        OIDCUserInfoEndpoint: data.userinfo_endpoint || '',
-                      }));
-                      showSuccess('自动发现成功', showAlert);
-                    } catch (error) {
-                      const errorMessage =
-                        error instanceof Error
-                          ? error.message
-                          : '自动发现失败，请手动配置端点';
-                      showError(errorMessage, showAlert);
-                      throw error;
-                    }
-                  });
-                }}
-                disabled={isLoading('oidcDiscover')}
-                className={`px-4 py-2 ${
-                  isLoading('oidcDiscover')
-                    ? buttonStyles.disabled
-                    : buttonStyles.primary
-                } rounded-lg whitespace-nowrap sm:w-auto w-full`}
-              >
-                {isLoading('oidcDiscover') ? '发现中...' : '自动发现'}
-              </button>
-            </div>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              OIDC提供商的Issuer URL，填写后可点击"自动发现"按钮自动获取端点配置
-            </p>
-          </div>
-
-          {/* Authorization Endpoint */}
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              Authorization Endpoint（授权端点）
-            </label>
-            <input
-              type='text'
-              placeholder='https://your-oidc-provider.com/realms/your-realm/protocol/openid-connect/auth'
-              value={registrationSettings.OIDCAuthorizationEndpoint || ''}
-              onChange={(e) =>
-                setRegistrationSettings((prev) => ({
-                  ...prev,
-                  OIDCAuthorizationEndpoint: e.target.value,
-                }))
-              }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
-            />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              用户授权的端点URL
-            </p>
-          </div>
-
-          {/* Token Endpoint */}
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              Token Endpoint（Token端点）
-            </label>
-            <input
-              type='text'
-              placeholder='https://your-oidc-provider.com/realms/your-realm/protocol/openid-connect/token'
-              value={registrationSettings.OIDCTokenEndpoint || ''}
-              onChange={(e) =>
-                setRegistrationSettings((prev) => ({
-                  ...prev,
-                  OIDCTokenEndpoint: e.target.value,
-                }))
-              }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
-            />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              交换授权码获取token的端点URL
-            </p>
-          </div>
-
-          {/* UserInfo Endpoint */}
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              UserInfo Endpoint（用户信息端点）
-            </label>
-            <input
-              type='text'
-              placeholder='https://your-oidc-provider.com/realms/your-realm/protocol/openid-connect/userinfo'
-              value={registrationSettings.OIDCUserInfoEndpoint || ''}
-              onChange={(e) =>
-                setRegistrationSettings((prev) => ({
-                  ...prev,
-                  OIDCUserInfoEndpoint: e.target.value,
-                }))
-              }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
-            />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              获取用户信息的端点URL
-            </p>
-          </div>
-
-          {/* OIDC Client ID */}
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              OIDC Client ID
-            </label>
-            <input
-              type='text'
-              placeholder='请输入Client ID'
-              value={registrationSettings.OIDCClientId || ''}
-              onChange={(e) =>
-                setRegistrationSettings((prev) => ({
-                  ...prev,
-                  OIDCClientId: e.target.value,
-                }))
-              }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
-            />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              在OIDC提供商处注册应用后获得的Client ID
-            </p>
-          </div>
-
-          {/* OIDC Client Secret */}
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              OIDC Client Secret
-            </label>
-            <input
-              type='password'
-              placeholder='请输入Client Secret'
-              value={registrationSettings.OIDCClientSecret || ''}
-              onChange={(e) =>
-                setRegistrationSettings((prev) => ({
-                  ...prev,
-                  OIDCClientSecret: e.target.value,
-                }))
-              }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
-            />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              在OIDC提供商处注册应用后获得的Client Secret
-            </p>
-          </div>
-
-          {/* OIDC Redirect URI - 只读显示 */}
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              OIDC Redirect URI（回调地址）
-            </label>
-            <div className='relative'>
-              <input
-                type='text'
-                readOnly
-                value={
-                  typeof window !== 'undefined'
-                    ? `${
-                        (window as any).RUNTIME_CONFIG?.SITE_BASE ||
-                        window.location.origin
-                      }/api/auth/oidc/callback`
-                    : ''
-                }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 cursor-default'
-              />
-              <button
-                type='button'
-                onClick={() => {
-                  const uri = `${
-                    (window as any).RUNTIME_CONFIG?.SITE_BASE ||
-                    window.location.origin
-                  }/api/auth/oidc/callback`;
-                  navigator.clipboard.writeText(uri);
-                  showSuccess('已复制到剪贴板', showAlert);
-                }}
-                className='absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition-colors'
-              >
-                复制
-              </button>
-            </div>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              这是系统自动生成的回调地址，基于环境变量SITE_BASE。请在OIDC提供商（如Keycloak、Auth0等）的应用配置中添加此地址作为允许的重定向URI
-            </p>
-          </div>
-
-          {/* OIDC登录按钮文字 */}
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              OIDC登录按钮文字
-            </label>
-            <input
-              type='text'
-              placeholder='使用OIDC登录'
-              value={registrationSettings.OIDCButtonText || ''}
-              onChange={(e) =>
-                setRegistrationSettings((prev) => ({
-                  ...prev,
-                  OIDCButtonText: e.target.value,
-                }))
-              }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
-            />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              自定义OIDC登录按钮显示的文字,如"使用企业账号登录"、"使用SSO登录"等。留空则显示默认文字"使用OIDC登录"
-            </p>
-          </div>
-
-          {/* OIDC最低信任等级 */}
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              最低信任等级
-            </label>
-            <input
-              type='number'
-              min='0'
-              max='4'
-              placeholder='0'
-              value={
-                registrationSettings.OIDCMinTrustLevel === 0
-                  ? ''
-                  : registrationSettings.OIDCMinTrustLevel
-              }
-              onChange={(e) =>
-                setRegistrationSettings((prev) => ({
-                  ...prev,
-                  OIDCMinTrustLevel:
-                    e.target.value === '' ? 0 : parseInt(e.target.value),
-                }))
-              }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
-            />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              仅LinuxDo网站有效。设置为0时不判断，1-4表示最低信任等级要求
-            </p>
-          </div>
-        </div>
+        <OIDCProvidersEditor
+          providers={registrationSettings.OIDCProviders}
+          savedProviders={getOIDCProviders(config.SiteConfig)}
+          isLegacy={config.SiteConfig.OIDCProviders === undefined && getOIDCProviders(config.SiteConfig).length > 0}
+          onChange={(update) => setRegistrationSettings((previous) => ({
+            ...previous,
+            OIDCProviders: update(previous.OIDCProviders),
+          }))}
+        />
       </details>
-
       {/* 操作按钮 */}
       <div className='flex justify-end'>
         <button

@@ -6,6 +6,7 @@ import { AlertCircle, CheckCircle, Eye, EyeOff, Lock,Send, User } from 'lucide-r
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
+import type { PublicOIDCProvider } from '@/lib/oidc';
 import { PROJECT_NAME, PROJECT_REPOSITORY_URL } from '@/lib/project';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
@@ -108,6 +109,7 @@ function LoginPageClient() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileLoaded, setTurnstileLoaded] = useState(false);
   const [siteConfig, setSiteConfig] = useState<any>(null);
+  const [oidcProviders, setOIDCProviders] = useState<PublicOIDCProvider[]>([]);
   const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(null);
   const [backgroundImage, setBackgroundImage] = useState<string>('');
   const [telegramLoginEnabled, setTelegramLoginEnabled] = useState(false);
@@ -152,9 +154,14 @@ function LoginPageClient() {
       LoginRequireTurnstile: runtimeConfig?.LOGIN_REQUIRE_TURNSTILE || false,
       TurnstileSiteKey: runtimeConfig?.TURNSTILE_SITE_KEY || '',
       EnableRegistration: runtimeConfig?.ENABLE_REGISTRATION || false,
-      EnableOIDCLogin: runtimeConfig?.ENABLE_OIDC_LOGIN || false,
-      OIDCButtonText: runtimeConfig?.OIDC_BUTTON_TEXT || '',
     });
+    setOIDCProviders(
+      Array.isArray(runtimeConfig?.OIDC_PROVIDERS)
+        ? runtimeConfig.OIDC_PROVIDERS
+        : runtimeConfig?.ENABLE_OIDC_LOGIN
+          ? [{ id: 'legacy', name: 'OIDC', buttonText: runtimeConfig.OIDC_BUTTON_TEXT || '使用OIDC登录', enableRegistration: Boolean(runtimeConfig.ENABLE_OIDC_REGISTRATION) }]
+          : []
+    );
     setTelegramLoginEnabled(Boolean(runtimeConfig?.ENABLE_TELEGRAM_LOGIN));
 
     // 从localStorage读取记住的密码信息
@@ -462,7 +469,7 @@ function LoginPageClient() {
         </form>
 
         {/* 第三方登录区域 */}
-        {shouldAskUsername && (telegramLoginEnabled || siteConfig?.EnableOIDCLogin) && (
+        {shouldAskUsername && (telegramLoginEnabled || oidcProviders.length > 0) && (
           <div className='mt-6'>
             <div className='relative'>
               <div className='absolute inset-0 flex items-center'>
@@ -493,16 +500,16 @@ function LoginPageClient() {
                 </p>
               )}
               {/* OIDC登录按钮 */}
-              {siteConfig?.EnableOIDCLogin && (
-                <button
-                  type='button'
-                   onClick={() => window.location.assign(new URL('/api/auth/oidc/login', window.location.origin).toString())}
+              {oidcProviders.map((provider) => (
+                <a
+                  key={provider.id}
+                  href={`/api/auth/oidc/login?provider=${encodeURIComponent(provider.id)}`}
                   className='w-full inline-flex justify-center items-center rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-zinc-800/60 py-3 text-base font-semibold text-gray-700 dark:text-gray-200 shadow-xs transition-all duration-200 hover:bg-gray-50 dark:hover:bg-zinc-700/60'
                 >
-                  {getOIDCProviderIcon(siteConfig?.OIDCButtonText || '')}
-                  {siteConfig?.OIDCButtonText || '使用OIDC登录'}
-                </button>
-              )}
+                  <span aria-hidden='true'>{getOIDCProviderIcon(`${provider.name} ${provider.buttonText}`)}</span>
+                  {provider.buttonText || `使用${provider.name || 'OIDC'}登录`}
+                </a>
+              ))}
             </div>
           </div>
         )}

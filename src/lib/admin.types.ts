@@ -1,3 +1,5 @@
+import type { OIDCProviderConfig } from './oidc';
+
 export interface ConfigSubscription {
   ID: string;
   Name: string;
@@ -89,7 +91,8 @@ export interface AdminConfig {
     // 求片功能配置
     EnableMovieRequest?: boolean; // 启用求片功能
     MovieRequestCooldown?: number; // 求片冷却时间（秒），默认3600
-    // OIDC配置
+    // OIDC配置（列表存在时优先，旧字段仅用于兼容迁移）
+    OIDCProviders?: OIDCProviderConfig[];
     EnableOIDCLogin?: boolean; // 启用OIDC登录
     EnableOIDCRegistration?: boolean; // 启用OIDC注册
     OIDCIssuer?: string; // OIDC Issuer URL (用于自动发现)

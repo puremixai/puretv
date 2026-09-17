@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
+import { getPublicOIDCProviders } from '@/lib/oidc';
 import { CURRENT_VERSION } from '@/lib/version';
 
 export const runtime = 'nodejs';
@@ -36,6 +37,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       SiteName: process.env.NEXT_PUBLIC_SITE_NAME || 'PureTV',
       StorageType: 'localstorage',
+      OIDCProviders: [],
+      EnableOIDCLogin: false,
+      EnableOIDCRegistration: false,
+      OIDCButtonText: '',
       Version: CURRENT_VERSION,
       TVModeEnabled: process.env.ENABLE_TV_MODE !== 'false',
       WatchRoom: watchRoomConfig,
@@ -49,6 +54,7 @@ export async function GET(request: NextRequest) {
 
   // 非 localStorage 模式，从数据库读取配置
   const config = await getConfig();
+  const oidcProviders = getPublicOIDCProviders(config.SiteConfig);
   const result = {
     SiteName: config.SiteConfig.SiteName,
     StorageType: storageType,
@@ -61,9 +67,10 @@ export async function GET(request: NextRequest) {
     RegistrationRequireTurnstile: config.SiteConfig.RegistrationRequireTurnstile || false,
     LoginRequireTurnstile: config.SiteConfig.LoginRequireTurnstile || false,
     TurnstileSiteKey: config.SiteConfig.TurnstileSiteKey || '',
-    EnableOIDCLogin: config.SiteConfig.EnableOIDCLogin || false,
-    EnableOIDCRegistration: config.SiteConfig.EnableOIDCRegistration || false,
-    OIDCButtonText: config.SiteConfig.OIDCButtonText || '',
+    OIDCProviders: oidcProviders,
+    EnableOIDCLogin: oidcProviders.length > 0,
+    EnableOIDCRegistration: oidcProviders.some((provider) => provider.enableRegistration),
+    OIDCButtonText: oidcProviders[0]?.buttonText || '',
     EnableTelegramLogin: Boolean(
       config.TelegramConfig?.enabled &&
       config.TelegramConfig?.loginEnabled &&

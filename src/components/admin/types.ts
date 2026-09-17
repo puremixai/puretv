@@ -1,5 +1,6 @@
 import { AdminConfig } from '@/lib/admin.types';
 import { ALL_FEATURE_PERMISSION_KEYS } from '@/lib/feature-permissions';
+import type { OIDCProviderConfig } from '@/lib/oidc';
 
 export const DEFAULT_GROUP_PERMISSIONS = [...ALL_FEATURE_PERMISSION_KEYS];
 
@@ -61,6 +62,7 @@ export interface SiteConfig {
   TurnstileSiteKey?: string;
   TurnstileSecretKey?: string;
   DefaultUserTags?: string[];
+  OIDCProviders?: OIDCProviderConfig[];
   EnableOIDCLogin?: boolean;
   EnableOIDCRegistration?: boolean;
   OIDCIssuer?: string;

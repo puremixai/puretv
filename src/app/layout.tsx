@@ -10,6 +10,7 @@ import './cinema-ui.css';
 
 import { parseAuthInfo } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { getPublicOIDCProviders, PublicOIDCProvider } from '@/lib/oidc';
 import { getUserFeatureAccess } from '@/lib/permissions';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 
@@ -117,9 +118,7 @@ export default async function RootLayout({
   let loginRequireTurnstile = false;
   let registrationRequireTurnstile = false;
   let turnstileSiteKey = '';
-  let enableOIDCLogin = false;
-  let enableOIDCRegistration = false;
-  let oidcButtonText = '';
+  let oidcProviders: PublicOIDCProvider[] = [];
   let telegramLoginEnabled = false;
   let telegramBotUsername = '';
   let aiEnabled = false;
@@ -203,9 +202,7 @@ export default async function RootLayout({
     registrationRequireTurnstile =
       config.SiteConfig.RegistrationRequireTurnstile || false;
     turnstileSiteKey = config.SiteConfig.TurnstileSiteKey || '';
-    enableOIDCLogin = config.SiteConfig.EnableOIDCLogin || false;
-    enableOIDCRegistration = config.SiteConfig.EnableOIDCRegistration || false;
-    oidcButtonText = config.SiteConfig.OIDCButtonText || '';
+    oidcProviders = getPublicOIDCProviders(config.SiteConfig);
     telegramLoginEnabled = Boolean(
       config.TelegramConfig?.enabled &&
       config.TelegramConfig?.loginEnabled &&
@@ -284,6 +281,7 @@ export default async function RootLayout({
       : runtimeStorageType;
 
   const runtimeConfig = {
+    SITE_BASE: process.env.SITE_BASE || '',
     STORAGE_TYPE: runtimeStorageType,
     DISPLAY_STORAGE_TYPE: displayStorageType,
     LOCAL_SETTINGS_SYNC_MODE: localSettingsSyncMode,
@@ -326,9 +324,10 @@ export default async function RootLayout({
     LOGIN_REQUIRE_TURNSTILE: loginRequireTurnstile,
     REGISTRATION_REQUIRE_TURNSTILE: registrationRequireTurnstile,
     TURNSTILE_SITE_KEY: turnstileSiteKey,
-    ENABLE_OIDC_LOGIN: enableOIDCLogin,
-    ENABLE_OIDC_REGISTRATION: enableOIDCRegistration,
-    OIDC_BUTTON_TEXT: oidcButtonText,
+    OIDC_PROVIDERS: oidcProviders,
+    ENABLE_OIDC_LOGIN: oidcProviders.length > 0,
+    ENABLE_OIDC_REGISTRATION: oidcProviders.some((provider) => provider.enableRegistration),
+    OIDC_BUTTON_TEXT: oidcProviders[0]?.buttonText || '',
     ENABLE_TELEGRAM_LOGIN: telegramLoginEnabled,
     TELEGRAM_BOT_USERNAME: telegramBotUsername,
     AI_ENABLED: aiEnabled && userFeatureAccess.ai_ask,
@@ -376,7 +375,7 @@ export default async function RootLayout({
         {/* 将配置序列化后直接写入脚本，浏览器端可通过 window.RUNTIME_CONFIG 获取 */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.RUNTIME_CONFIG = ${JSON.stringify(runtimeConfig)};`,
+            __html: `window.RUNTIME_CONFIG = ${JSON.stringify(runtimeConfig).replace(/</g, '\\u003c')};`,
           }}
         />
         {/* 流量统计脚本 */}

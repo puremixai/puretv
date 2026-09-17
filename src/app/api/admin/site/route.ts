@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { getOIDCProviders, validateOIDCProviders } from '@/lib/oidc';
 import { checkMutationVersion, withConfigMutation } from '@/lib/server/config-mutation';
 import { getAuthenticatedUser } from '@/lib/session';
 import { normalizeApiBaseUrl } from '@/lib/url';
@@ -289,6 +290,38 @@ export const POST = withConfigMutation(async function POST(request: NextRequest)
     }
 
     // 更新缓存中的站点设置
+    let oidcProviders = adminConfig.SiteConfig.OIDCProviders;
+    try {
+      if (body.OIDCProviders !== undefined) {
+        oidcProviders = validateOIDCProviders(
+          body.OIDCProviders,
+          adminConfig.SiteConfig,
+        );
+      } else if (
+        oidcProviders === undefined &&
+        getOIDCProviders(adminConfig.SiteConfig).length
+      ) {
+        // Legacy forms must use the same identity checks as the provider editor.
+        const legacyPatch = Object.fromEntries(
+          Object.entries(body).filter(([key, value]) =>
+            value !== undefined && (
+              key.startsWith('OIDC') ||
+              key === 'EnableOIDCLogin' ||
+              key === 'EnableOIDCRegistration'
+            )
+          ),
+        );
+        oidcProviders = validateOIDCProviders(
+          getOIDCProviders({ ...adminConfig.SiteConfig, ...legacyPatch }),
+          adminConfig.SiteConfig,
+        );
+      }
+    } catch (error) {
+      return NextResponse.json(
+        { error: (error as Error).message },
+        { status: 400 },
+      );
+    }
     // API Base URL 统一去尾斜杠，避免运行时拼接路径出现 //
     adminConfig.SiteConfig = {
       SiteName,
@@ -338,6 +371,7 @@ export const POST = withConfigMutation(async function POST(request: NextRequest)
       TurnstileSiteKey,
       TurnstileSecretKey,
       DefaultUserTags,
+      OIDCProviders: oidcProviders,
       EnableOIDCLogin,
       EnableOIDCRegistration,
       OIDCIssuer: normalizeApiBaseUrl(OIDCIssuer),
